@@ -503,7 +503,7 @@ export class Room extends StatefulRoom<RoomEvents> {
                 players: this.players.size + "/" + this.settings.maxPlayers + " players",
                 map: logMaps[this.settings.map],
                 host: this.config.authoritativeServer ? "server-authority" : this.playerAuthority || "no host",
-                privacy: this.privacy
+                privacy: this.privacy === RoomPrivacy.Public ? "public" : "private",
             }
         );
 
