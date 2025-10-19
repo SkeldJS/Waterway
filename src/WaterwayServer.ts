@@ -1968,7 +1968,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
                             if (!nextMessage)
                                 break;
 
-                            await this.handlePacket(parsedPacket, cachedConnection);
+                            await this.handlePacket(nextMessage, cachedConnection);
 
                             cachedConnection.unorderedMessageMap.delete(cachedConnection.nextExpectedNonce);
                             cachedConnection.nextExpectedNonce++;
