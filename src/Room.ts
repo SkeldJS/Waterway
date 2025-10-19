@@ -49,6 +49,7 @@ import {
     SetVisorMessage,
     SpawnMessage,
     StartGameMessage,
+    UnknownDataMessage,
     UnknownGameDataMessage,
     UnknownRpcMessage,
     UnreliablePacket,
@@ -72,7 +73,8 @@ import {
     SpecialOwnerId,
     ColorCodes,
     NetworkedPlayerInfo,
-    MeetingHud
+    MeetingHud,
+    DataState
 } from "@skeldjs/core";
 
 import { BasicEvent, ExtractEventTypes } from "@skeldjs/events";
@@ -569,70 +571,13 @@ export class Room extends StatefulRoom<RoomEvents> {
 
     async processFixedUpdate() {
         const curTime = Date.now();
-        const delta = curTime - this.lastFixedUpdateTimestamp;
 
         if (this.config.createTimeout > 0 && curTime - this.createdAt > this.config.createTimeout * 1000 && !this.playerJoinedFlag) {
             this.destroy(DisconnectReason.ServerRequest);
             this.playerJoinedFlag = true;
         }
 
-        this.lastFixedUpdateTimestamp = Date.now();
-
-        for (const [, component] of this.networkedObjects) {
-            if (!component)
-                continue;
-
-            await component.processFixedUpdate(delta / 1000);
-
-            if (component.dirtyBit <= 0)
-                continue;
-
-            const writer = HazelWriter.alloc(1024);
-            if (component.serializeToWriter(writer, false)) {
-                writer.realloc(writer.cursor);
-                this.messageStream.push(new DataMessage(component.netId, writer.buffer));
-            }
-            component.dirtyBit = 0;
-        }
-
-        if (this.endGameIntents.length) {
-            const endGameIntents = this.endGameIntents;
-            this.endGameIntents = [];
-            if (this.isAuthoritative) {
-                for (let i = 0; i < endGameIntents.length; i++) {
-                    const intent = endGameIntents[i];
-                    const ev = await this.emit(
-                        new RoomEndGameIntentEvent(
-                            this,
-                            intent.name,
-                            intent.reason,
-                            intent.metadata
-                        )
-                    );
-                    if (ev.canceled) {
-                        endGameIntents.splice(i, 1);
-                        i--;
-                    }
-                }
-
-                const firstIntent = endGameIntents[0];
-                if (firstIntent) {
-                    this.endGame(firstIntent.reason, firstIntent);
-                }
-            }
-        }
-
-        const ev = await this.emit(
-            new RoomFixedUpdateEvent(
-                this,
-                this.messageStream,
-                delta,
-            )
-        );
-
-        if (!ev.canceled && this.messageStream.length) {
-            await this.flushMessages();
-        }
+        await super.processFixedUpdate();
     }
 
     async flushMessages() {
@@ -799,8 +744,17 @@ export class Room extends StatefulRoom<RoomEvents> {
         const component = this.networkedObjects.get(message.netId);
 
         if (component) {
-            const reader = HazelReader.from(message.data);
-            component.deserializeFromReader(reader, false);
+            if (message.data instanceof UnknownDataMessage) {
+                const parsedData = component.parseData(DataState.Update, message.data.dataReader);
+                if (!parsedData) {
+                    this.logger.error("Unknown data from player %s for component net id %s, %s: %s bytes",
+                        senderPlayer, component.netId, SpawnType[component.spawnType] || "Unknown", message.data.dataReader.nodeBuffer.byteLength);
+                    return this.server.config.socket.acceptUnknownGameData;
+                }
+                await component.handleData(parsedData);
+            } else {
+                await component.handleData(message.data);
+            }
         }
         return true;
     }
@@ -813,7 +767,7 @@ export class Room extends StatefulRoom<RoomEvents> {
                 if (message.child instanceof UnknownRpcMessage) {
                     const parsedRpc = component.parseRemoteCall(message.child.messageTag, message.child.dataReader);
                     if (!parsedRpc) {
-                        this.logger.error("Unknown remote procedure call from player %s (net id %s, %s): message tag %s",
+                        this.logger.error("Unknown remote procedure call from player %s for component net id %s, %s: message tag %s",
                             senderPlayer, component.netId, SpawnType[component.spawnType] || "Unknown", RpcMessageTag[message.child.messageTag] || message.child.messageTag);
                         return this.server.config.socket.acceptUnknownGameData;
                     }
@@ -822,7 +776,7 @@ export class Room extends StatefulRoom<RoomEvents> {
                     await component.handleRemoteCall(message.child);
                 }
             } catch (e) {
-                this.logger.error("Could not process remote procedure call from player %s (net id %s, %s): %s",
+                this.logger.error("Could not process remote procedure call from player %s for component net id %s, %s: %s",
                     senderPlayer, component.netId, SpawnType[component.spawnType] || "Unknown", e);
                 return false;
             }
@@ -880,7 +834,22 @@ export class Room extends StatefulRoom<RoomEvents> {
                 message.components.map(x => x.netId),
             );
             for (let i = 0; i < message.components.length; i++) {
-                object.components[i].deserializeFromReader(HazelReader.from(message.components[i].data), true);
+                const data = message.components[i].data;
+                const component = object.components[i];
+
+                if (!data) continue; // component has no spawn data
+
+                if (data instanceof UnknownDataMessage) {
+                    const parsedData = component.parseData(DataState.Spawn, data.dataReader);
+                    if (!parsedData) {
+                        this.logger.error("Unknown data from player %s for component net id %s, %s: %s bytes (you might need to add this to config.rooms.advanced.unknownObjects)",
+                            senderPlayer, component.netId, SpawnType[component.spawnType] || "Unknown", data.dataReader.nodeBuffer.byteLength);
+                        continue;
+                    }
+                    await component.handleData(parsedData);
+                } else {
+                    await component.handleData(data);
+                }
             }
         } catch (e) {
             this.logger.error("Couldn't spawn object of type: %s with %s component%s (you might need to add it to config.rooms.advanced.unknownObjects)",
@@ -1145,89 +1114,6 @@ export class Room extends StatefulRoom<RoomEvents> {
                         )
                     );
                 }
-            }
-        }
-
-        await Promise.all(promises);
-    }
-
-    async broadcastMovement(component: CustomNetworkTransform<this>, data: Buffer) {
-        const sender = component.player;
-        const movementPacket = new UnreliablePacket(
-            [
-                new GameDataMessage(
-                    this.code.id,
-                    [
-                        new DataMessage(
-                            component.netId,
-                            data
-                        )
-                    ]
-                )
-            ]
-        );
-
-        if (this.server.config.optimizations.movement.updateRate > 1) {
-            const velx = data.readUInt16LE(6);
-            const vely = data.readUInt16LE(8);
-            const velocity = new Vector2(Vector2.lerp(velx / 65535), Vector2.lerp(vely / 65535));
-            const magnitude = Vector2.null.dist(velocity);
-
-            if (magnitude > 0.5) {
-                let movementTick = (sender as any)[_movementTick] || 0;
-                movementTick++;
-                (sender as any)[_movementTick] = movementTick;
-
-                if (movementTick % this.server.config.optimizations.movement.updateRate !== 0) {
-                    return;
-                }
-            }
-        }
-
-        const writer = this.server.config.optimizations.movement.reuseBuffer
-            ? HazelWriter.alloc(22)
-                .uint8(0)
-                .write(movementPacket)
-            : undefined;
-
-        const promises = [];
-
-        for (const [clientId, player] of this.players) {
-            const connection = this.connections.get(clientId);
-
-            if (player === sender || !connection)
-                continue;
-
-            const playerTransform = player.characterControl?.getComponentSafe(2, CustomNetworkTransform);
-
-            if (playerTransform && this.server.config.optimizations.movement.visionChecks) {
-                const dist = component.position.dist(playerTransform.position);
-
-                if (dist >= 7) // todo: ignore this check if the player is near the admin table
-                    continue;
-            }
-
-            const playerInfo = player.getPlayerInfo();
-            const senderPlayerInfo = sender.getPlayerInfo();
-
-            if (this.server.config.optimizations.movement.deadChecks && senderPlayerInfo?.isDead && !playerInfo?.isDead)
-                continue;
-
-            if (writer) {
-                promises.push(
-                    this.server.sendRawPacket(
-                        connection.listenSocket,
-                        connection.remoteInfo,
-                        writer.buffer
-                    )
-                );
-            } else {
-                promises.push(
-                    this.server.sendPacket(
-                        connection,
-                        movementPacket
-                    )
-                );
             }
         }
 
@@ -1704,7 +1590,7 @@ export class Room extends StatefulRoom<RoomEvents> {
 
         const unknownObject = await this.createObjectWithNetIds(spawnType, prefab, ownerId, flags, componentsData.map(x => x.netId));
         for (let i = 0; i < componentsData.length; i++) {
-            unknownObject.components[i].deserializeFromReader(HazelReader.from(componentsData[i].data), true);
+            // can't read unknown data
         }
     }
 

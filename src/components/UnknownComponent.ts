@@ -1,18 +1,18 @@
-import { StatefulRoom, NetworkedObject, SpawnType } from "@skeldjs/core";
-import { BaseRpcMessage } from "@skeldjs/protocol";
-import { HazelReader, HazelWriter } from "@skeldjs/hazel";
+import { StatefulRoom, NetworkedObject, SpawnType, DataState } from "@skeldjs/core";
+import { BaseDataMessage, BaseRpcMessage, UnknownDataMessage } from "@skeldjs/protocol";
+import { HazelReader } from "@skeldjs/hazel";
 
 export class UnknownComponent<RoomType extends StatefulRoom> extends NetworkedObject<RoomType> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    deserializeFromReader() { }
-
-    serializeToWriter(writer: HazelWriter, spawn: boolean): boolean {
-        return false;
+    parseData(state: DataState, reader: HazelReader): BaseDataMessage | undefined {
+        return undefined;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    Serialize(): boolean {
-        throw new Error("Cannot serialize unknown component; (you might need to disable Server-as-a-Host)");
+    async handleData(data: BaseDataMessage): Promise<void> {
+        void data;
+    }
+
+    createData(state: DataState): BaseDataMessage | undefined {
+        return undefined;
     }
     
     parseRemoteCall(rpcTag: number, reader: HazelReader): BaseRpcMessage | undefined {

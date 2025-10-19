@@ -1474,22 +1474,22 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
 
         const tookMs = Date.now() - start;
         if (tookMs > 5) {
-            this.logger.warn("Took %sms to write: %s (%s bytes) to %s", tookMs, packet.messageTag, writer.buffer.byteLength, connection);
+            this.logger.warn("Took %sms to write: %s (%s bytes) to %s", tookMs, packet.messageTag, writer.nodeBuffer.byteLength, connection);
         }
 
         if (reliablePacket.nonce !== undefined && !(packet instanceof AcknowledgePacket)) {
             connection.sentPackets.unshift(
                 new SentPacket(
                     reliablePacket.nonce,
-                    writer.buffer,
+                    writer.nodeBuffer,
                     Date.now(),
                     false
                 )
             );
             connection.sentPackets.splice(8);
-            await this.sendRawPacket(connection.listenSocket, connection.remoteInfo, writer.buffer);
+            await this.sendRawPacket(connection.listenSocket, connection.remoteInfo, writer.nodeBuffer);
         } else {
-            await this.sendRawPacket(connection.listenSocket, connection.remoteInfo, writer.buffer);
+            await this.sendRawPacket(connection.listenSocket, connection.remoteInfo, writer.nodeBuffer);
         }
     }
 
