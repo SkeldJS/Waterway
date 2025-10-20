@@ -1,6 +1,6 @@
-import dgram from "dgram";
-import vorpal from "vorpal";
-import chalk from "chalk";
+import * as dgram from "dgram";
+import * as vorpal from "vorpal";
+import * as chalk from "chalk";
 
 import {
     DisconnectReason,
@@ -608,7 +608,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
     /**
      * The Http matchmaker for the server, if enabled, see {@link WaterwayConfig.matchmaker}.
      */
-    matchmaker?: Matchmaker;
+    matchmaker: Matchmaker|undefined;
 
     /**
      * All client connections connected to this server, mapped by their address:port,

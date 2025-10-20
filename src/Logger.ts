@@ -1,8 +1,7 @@
-import util from "util";
-import fs from "fs";
-
-import chalk from "chalk";
-import vorpal from "vorpal";
+import * as util from "util";
+import * as fs from "fs";
+import * as chalk from "chalk";
+import * as vorpal from "vorpal";
 
 export class Logger {
     public fileStream?: fs.WriteStream;

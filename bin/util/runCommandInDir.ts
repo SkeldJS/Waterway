@@ -1,4 +1,4 @@
-import child_process from "child_process";
+import * as child_process from "child_process";
 
 export function runCommandInDir(dir: string, command: string) {
     return new Promise<string>((resolve, reject) => {

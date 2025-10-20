@@ -1,10 +1,10 @@
-import chalk from "chalk";
-import Koa from "koa";
+import * as chalk from "chalk";
+import * as Koa from "koa";
 import koaBody from "koa-body";
-import http from "http";
-import crypto from "crypto";
+import * as http from "http";
+import * as crypto from "crypto";
 
-import KoaRouter from "@koa/router";
+import * as KoaRouter from "@koa/router";
 import { HazelWriter } from "@skeldjs/hazel";
 import { RoomCode, Version } from "@skeldjs/client";
 import { DisconnectReason, Filters, GameKeyword, GameMap, GameMode, Platform, QuickChatMode, StringNames } from "@skeldjs/constant";
@@ -214,7 +214,7 @@ function silentJsonParse(jsonString: string) {
 export class Matchmaker {
     logger: Logger;
 
-    httpServer?: http.Server;
+    httpServer: http.Server|undefined;
     privateKey: Buffer;
 
     constructor(protected readonly server: WaterwayServer) {

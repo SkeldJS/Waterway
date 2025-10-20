@@ -1,5 +1,5 @@
-import dgram from "dgram";
-import chalk from "chalk";
+import * as dgram from "dgram";
+import * as chalk from "chalk";
 import * as util from "util";
 
 import { DisconnectReason, Language, Platform, QuickChatMode } from "@skeldjs/constant";
@@ -166,7 +166,7 @@ export class Connection {
     /**
      * The room that this client is in.
      */
-    room?: Room;
+    room: Room|undefined;
 
     constructor(
         /**

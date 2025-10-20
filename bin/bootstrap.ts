@@ -1,16 +1,16 @@
 import "./modulePatch";
 
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 dotenv.config();
 
-import https from "https";
-import net from "net";
-import path from "path";
-import fs from "fs/promises";
+import * as https from "https";
+import * as net from "net";
+import * as path from "path";
+import * as fs from "fs/promises";
 
-import compareVersions from "compare-versions";
-import chalk from "chalk";
-import chokidar from "chokidar";
+import * as compareVersions from "compare-versions";
+import * as chalk from "chalk";
+import * as chokidar from "chokidar";
 
 import { Spinner } from "./util/Spinner";
 import { runCommandInDir } from "./util/runCommandInDir";

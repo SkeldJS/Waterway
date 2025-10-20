@@ -1,13 +1,13 @@
 import "reflect-metadata";
 
-import path from "path";
-import fs from "fs/promises";
+import * as path from "path";
+import * as fs from "fs/promises";
 
 import { CoreProperties as PackageJson } from "@schemastore/package";
-import resolvePkg from "resolve-pkg";
-import chalk from "chalk";
-import minimatch from "minimatch";
-import vorpal from "vorpal";
+import * as resolvePkg from "resolve-pkg";
+import * as chalk from "chalk";
+import * as minimatch from "minimatch";
+import * as vorpal from "vorpal";
 
 import {
     AirshipStatus,

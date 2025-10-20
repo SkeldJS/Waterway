@@ -1,4 +1,4 @@
-import vorpal from "vorpal";
+import * as vorpal from "vorpal";
 
 import { Plugin } from "../../handlers";
 import { MethodDecorator } from "../types";

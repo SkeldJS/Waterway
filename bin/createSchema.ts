@@ -1,7 +1,7 @@
 import "./modulePatch";
 
-import path from "path";
-import fs from "fs/promises";
+import * as path from "path";
+import * as fs from "fs/promises";
 import { iteratePlugins } from "./util/iteratePlugins";
 import { importPlugin } from "./importPlugin";
 

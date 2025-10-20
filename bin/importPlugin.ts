@@ -1,6 +1,6 @@
-import path from "path";
-import fs from "fs/promises";
-import minimatch from "minimatch";
+import * as path from "path";
+import * as fs from "fs/promises";
+import * as minimatch from "minimatch";
 import { WaterwayServer } from "../src/WaterwayServer";
 import { PluginLoader, PluginPackageJson, SomePluginCtr } from "../src/handlers";
 

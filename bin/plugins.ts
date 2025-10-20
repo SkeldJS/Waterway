@@ -1,11 +1,11 @@
 import "./modulePatch";
 
-import path from "path";
-import fs from "fs/promises";
+import * as path from "path";
+import * as fs from "fs/promises";
 
-import chalk from "chalk";
-import prompts from "prompts";
-import resolvePkg from "resolve-pkg";
+import * as chalk from "chalk";
+import * as prompts from "prompts";
+import * as resolvePkg from "resolve-pkg";
 import * as queryRegistry from "query-registry";
 
 import pluginGitignore from "./resources/plugin-gitignore";

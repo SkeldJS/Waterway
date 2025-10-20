@@ -1,5 +1,5 @@
-import path from "path";
-import BuiltinModule from "module";
+import * as path from "path";
+import * as BuiltinModule from "module";
 
 const Module: any = module.constructor.length > 1
     ? module.constructor

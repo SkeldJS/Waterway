@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import chalk from "chalk";
-import path from "path";
+import * as chalk from "chalk";
+import * as path from "path";
 
 process.env.IS_PKG = "1";
 process.env.PKG_EXE_DIRNAME = path.dirname(process.argv[0]);

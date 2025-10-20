@@ -1,5 +1,5 @@
-import readline from "readline";
-import chalk from "chalk";
+import * as readline from "readline";
+import * as chalk from "chalk";
 
 const spinnerFrames = [ "|", "/", "-", "\\", "|", "/", "-", "\\" ];
 

@@ -1,7 +1,7 @@
-import path from "path";
-import fs from "fs/promises";
+import * as path from "path";
+import * as fs from "fs/promises";
 
-import prompts from "prompts";
+import * as prompts from "prompts";
 
 import { Spinner } from "./util/Spinner";
 import { runCommandInDir } from "./util/runCommandInDir";

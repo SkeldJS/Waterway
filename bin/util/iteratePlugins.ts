@@ -1,6 +1,6 @@
-import path from "path";
-import fs from "fs/promises";
-import resolvePkg from "resolve-pkg";
+import * as path from "path";
+import * as fs from "fs/promises";
+import * as resolvePkg from "resolve-pkg";
 
 const pluginsDirectories: string[] = process.env.WATERWAY_PLUGINS?.split(",").map(x => x.trim()) || [ path.resolve(process.cwd(), "./plugins") ];
 
