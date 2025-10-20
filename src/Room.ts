@@ -286,9 +286,7 @@ export type RoomEvents = StatefulRoomEvents<Room> & ExtractEventTypes<[
     RoomSelectHostEvent
 ]>;
 
-const _movementTick = Symbol("_movementTick");
-
-export class Room extends StatefulRoom<RoomEvents> {
+export class Room extends StatefulRoom<Room, RoomEvents> {
     /**
      * The unix (milliseconds) timestamp. that the room was created.
      */
