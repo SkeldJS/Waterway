@@ -23,6 +23,7 @@ import {
     AlterGameMessage,
     BaseGameDataMessage,
     BaseRootMessage,
+    BaseSystemMessage,
     ComponentSpawnData,
     DataMessage,
     DespawnMessage,
@@ -1830,15 +1831,15 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
 
     // Abstract implementations
 
-    clearMyVote(meetingHud: MeetingHud<this>): Promise<void> {
+    clearMyVoteImpl(meetingHud: MeetingHud<this>): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
-    sendRepairSystem(systemType: SystemType, amount: number): Promise<void> {
+    sendUpdateSystemImpl(systemType: SystemType, message: BaseSystemMessage): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
-    getSelectedSeekerAllowed(seekerPlayerId: number): boolean {
+    getSelectedSeekerAllowedImpl(seekerPlayerId: number): boolean {
         return this.privacy === RoomPrivacy.Private;
     }
 
@@ -1851,11 +1852,11 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         }
     }
 
-    async playerVoteKicked(player: Player<this>): Promise<void> {
+    async playerVoteKickedImpl(player: Player<this>): Promise<void> {
         await this.removePlayers([ player ], DisconnectReason.Kicked);
     }
 
-    async removeUnreadiedPlayers(players: Player<this>[]): Promise<void> {
+    async removeUnreadiedPlayersImpl(players: Player<this>[]): Promise<void> {
         await this.removePlayers(players, DisconnectReason.LobbyInactivity);
     }
 }
