@@ -579,14 +579,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         await super.processFixedUpdate();
     }
 
-    async flushMessages() {
-        if (this.messageStream.length > 0) {
-            const stream = this.messageStream;
-            this.messageStream = [];
-            await this.broadcastImmediate(stream);
-        }
-    }
-
     spawnComponent(component: NetworkedObject<this>): void {
         if (!this.getOwnerOf(component))
             this.guardObjectAsOwner(component);
@@ -604,18 +596,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         return this.objectList
             .filter(object => object.ownerId === SpecialOwnerId.Server)
             .map(object => this.createObjectSpawnMessage(object));
-    }
-
-    async createPlayerInfo(player: Player<this>) {
-        const playerInfo = await this.createObjectOfType(SpawnType.PlayerInfo, SpecialOwnerId.Server, SpawnFlag.None) as NetworkedPlayerInfo<this>;
-        playerInfo.playerId = this.getAvailablePlayerID();
-        playerInfo.clientId = player.clientId;
-        playerInfo.friendCode = player.friendCode;
-        playerInfo.puid = player.puid;
-        await playerInfo.processAwake();
-        this.broadcastLazy(this.createObjectSpawnMessage(playerInfo));
-        this.playerInfo.set(playerInfo.playerId, playerInfo);
-        return playerInfo;
     }
 
     /**
@@ -690,7 +670,7 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     
 
     async handleEndGameMessage(message: EndGameMessage) {
-        await this.endGame(message.reason);
+        await this.handleEndGame(message.reason);
     }
 
     async handleStartGameMessage(message: StartGameMessage, senderPlayer: Player<Room>) {
@@ -1560,6 +1540,8 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         const ev = await this.emit(new RoomGameEndEvent(this, reason, intent));
         if (ev.canceled) return;
         
+        await this.flushMessages();
+
         await this.broadcastImmediate([], [new EndGameMessage(this.code.id, reason, false)]);
         await super.handleEndGame(reason);
 
@@ -1568,7 +1550,7 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         await this.updateAllClientAwareAuthority();
     }
 
-    async endGame(reason: GameOverReason, intent?: EndGameIntent) {
+    async endGame(reason: GameOverReason, intent: EndGameIntent) {
         await this.handleEndGame(reason, intent);
     }
 

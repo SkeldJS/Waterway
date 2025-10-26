@@ -798,9 +798,10 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
                 if (typeof args === "string") return;
                 const roomName = args["room code"].toUpperCase();
 
-                const reason = (!isNaN(parseInt(args.options.reason))
-                    ? args.options.reason
-                    : GameOverReason[args.options.reason]) || GameOverReason.None;
+                const reasonNumber = parseInt(args.options.reason);
+                const reason: GameOverReason = isNaN(reasonNumber)
+                    ? reasonNumber
+                    : (args.options.reason ? GameOverReason[args.options.reason as keyof typeof GameOverReason] : 255 as GameOverReason);
 
                 const codeId: number = roomName === "LOCAL"
                     ? 0x20
@@ -814,7 +815,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
                         return;
                     }
 
-                    await room.endGame(reason as unknown as number);
+                    await room.handleEndGame(reason);
                 } else {
                     this.logger.error("Couldn't find room: %s", roomName);
                 }
