@@ -799,7 +799,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
                 const roomName = args["room code"].toUpperCase();
 
                 const reasonNumber = parseInt(args.options.reason);
-                const reason: GameOverReason = isNaN(reasonNumber)
+                const reason: GameOverReason = !isNaN(reasonNumber)
                     ? reasonNumber
                     : (args.options.reason ? GameOverReason[args.options.reason as keyof typeof GameOverReason] : 255 as GameOverReason);
 
