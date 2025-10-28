@@ -435,7 +435,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
             if (this.config.enforceSettings) {
                 ev.setSettings(this.config.enforceSettings);
             }
-            this.logger.info("settings updated");
         });
 
         this.on("player.startmeeting", ev => {

@@ -1843,6 +1843,11 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
         if (message instanceof KickPlayerMessage) return await this.handleKickPlayerMessage(message, sender);
         if (message instanceof C2SGetGameListMessage) return await this.handleGetGameListMessage(message, sender);
 
+        if (message instanceof SetActivePodTypeMessage) {
+            // not sure what to do with this..
+            return;
+        }
+
         this.logger.error("Unknown root message to handle from client %s, with tag %s",
             sender, RootMessageTag[message.messageTag] || message.messageTag);
     }
