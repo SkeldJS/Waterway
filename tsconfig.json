@@ -15,11 +15,14 @@
     "exactOptionalPropertyTypes": true,
 
     "strict": true,
+
     "verbatimModuleSyntax": false,
     "isolatedModules": true,
+  
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
     "downlevelIteration": true
-  }
+  },
+  "exclude": ["plugins"]
 }

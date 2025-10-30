@@ -103,7 +103,7 @@ export class ImportedPlugin<PluginCtr extends typeof RoomPlugin | typeof WorkerP
 
         if (packageJson.engines && packageJson.engines.waterway) {
             if (!minimatch(WaterwayServer.serverVersion, packageJson.engines.waterway)) {
-                pluginLoader.server.logger.warn("Plugin %s build for an incompatible version of Waterway; loading anyway", packageJson.name);
+                pluginLoader.server.logger.warn("Plugin %s is built for an incompatible version of Waterway; loading anyway", packageJson.name);
             }
         }
 

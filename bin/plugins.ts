@@ -435,7 +435,25 @@ async function runCreatePlugin() {
 
             await runCommandInDir(
                 pluginDirectory,
-                prefix + " tsc --init --outDir ./dist --experimentalDecorators --emitDecoratorMetadata --sourceMap --declaration --allowJs --target es2017"
+                prefix + " tsc --init"
+                    + " --outDir ./dist"
+                    + " --module commonjs"
+                    + " --moduleResolution node"
+                    + " --target esnext"
+                    + " --types node"
+                    + " --sourceMap"
+                    + " --noUncheckedIndexedAccess false"
+                    + " --exactOptionalPropertyTypes"
+                    + " --strict"
+                    + " --verbatimModuleSyntax false"
+                    + " --isolatedModules"
+                    + " --noUncheckedSideEffectImports"
+                    + " --moduleDetection force"
+                    + " --skipLibCheck"
+                    + " --downlevelIteration"
+                    + " --experimentalDecorators"
+                    + " --emitDecoratorMetadata"
+                    + " --target es2017"
             );
         } else {
             await fs.writeFile(

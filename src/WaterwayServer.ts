@@ -581,7 +581,7 @@ export type WorkerEvents = RoomEvents
     ]>;
 
 export class WaterwayServer extends EventEmitter<WorkerEvents> {
-    static serverVersion = "1.2.0";
+    static serverVersion = "3.0.0";
 
     /**
      * Logger for this server.
@@ -1163,9 +1163,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
                 const foundRoom = this.rooms.get(roomCode);
 
                 if (foundRoom) {
-                    foundRoom.sendChat(message, {
-                        side: MessageSide.Left
-                    });
+                    foundRoom.sendChat(message);
                     this.logger.info("Broadcasted message to %s player(s)", foundRoom.connections.size);
                     return;
                 } else if (roomCode) {
@@ -1174,9 +1172,7 @@ export class WaterwayServer extends EventEmitter<WorkerEvents> {
 
                 let numPlayers = 0;
                 for (const [, room] of this.rooms) {
-                    room.sendChat(message, {
-                        side: MessageSide.Left
-                    });
+                    room.sendChat(message);
                     numPlayers += room.connections.size;
                 }
                 this.logger.info("Broadcasted message to %s player(s)", numPlayers);
