@@ -1,4 +1,4 @@
-import { EndGameIntent, GameOverReason } from "@skeldjs/core";
+import { EndGameIntent, GameOverReason } from "@skeldjs/au-core";
 import { BasicEvent, CancelableEvent } from "@skeldjs/events";
 import { Room } from "../../../Room";
 

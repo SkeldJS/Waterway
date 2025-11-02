@@ -1,4 +1,4 @@
-import { Player } from "@skeldjs/core";
+import { Player } from "@skeldjs/au-core";
 import { Plugin, ChatCommandCallback, SomePluginCtr } from "../../handlers";
 import { MethodDecorator } from "../types";
 import { Room } from "../../Room";

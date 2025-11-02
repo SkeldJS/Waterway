@@ -1,4 +1,4 @@
-import { NetworkedObject, NetworkedObjectConstructor } from "@skeldjs/core";
+import { NetworkedObject, NetworkedObjectConstructor } from "@skeldjs/au-core";
 import { SomePluginCtr } from "../../handlers";
 import { ClassDecorator } from "../types";
 import { Room } from "../../Room";

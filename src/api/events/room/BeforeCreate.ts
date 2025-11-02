@@ -1,6 +1,6 @@
 import { CancelableEvent } from "@skeldjs/events";
-import { GameSettings } from "@skeldjs/protocol";
-import { RoomCode } from "@skeldjs/client";
+import { GameSettings } from "@skeldjs/au-protocol";
+import { RoomCode } from "@skeldjs/au-client";
 
 import { Connection } from "../../../Connection";
 

@@ -1,4 +1,4 @@
-import { DisconnectReason } from "@skeldjs/constant";
+import { DisconnectReason } from "@skeldjs/au-core";
 import { CancelableEvent } from "@skeldjs/events";
 import { Room } from "../../../Room";
 

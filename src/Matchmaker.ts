@@ -6,8 +6,8 @@ import * as crypto from "crypto";
 
 import * as KoaRouter from "@koa/router";
 import { HazelWriter } from "@skeldjs/hazel";
-import { RoomCode, Version } from "@skeldjs/client";
-import { DisconnectReason, Filters, GameKeyword, GameMap, GameMode, Platform, QuickChatMode, StringNames } from "@skeldjs/constant";
+import { RoomCode, Version } from "@skeldjs/au-client";
+import { DisconnectReason, Filters, GameKeyword, GameMap, GameMode, Platform, QuickChatMode, StringName } from "@skeldjs/au-core";
 
 import { WaterwayServer } from "./WaterwayServer";
 import { Room, RoomPrivacy } from "./Room";
@@ -721,7 +721,7 @@ export class Matchmaker {
                 ctx.body = {
                     Errors: [{ Reason: DisconnectReason[DisconnectReason.GameNotFound] }],
                     Game: null,
-                    Region: StringNames.NoTranslation,
+                    Region: StringName.NoTranslation,
                     UntranslatedRegion: this.server.config.clusterName,
                 } as GameFoundByCodeJson;
                 return;
@@ -733,7 +733,7 @@ export class Matchmaker {
             ctx.body = {
                 Errors: null,
                 Game: this.getGameListing(ctx.socket.remoteAddress || "", foundRoom),
-                Region: StringNames.NoTranslation,
+                Region: StringName.NoTranslation,
                 UntranslatedRegion: this.server.config.clusterName,
             } as GameFoundByCodeJson;
         });

@@ -2,9 +2,8 @@ import * as dgram from "dgram";
 import * as chalk from "chalk";
 import * as util from "util";
 
-import { DisconnectReason, Language, Platform, QuickChatMode } from "@skeldjs/constant";
-import { DisconnectMessages } from "@skeldjs/data";
-import { Version } from "@skeldjs/client";
+import { DisconnectReason, Language, Platform, QuickChatMode } from "@skeldjs/au-core";
+import { Version } from "@skeldjs/au-client";
 
 import {
     BaseRootPacket,
@@ -13,7 +12,7 @@ import {
     PlayerJoinData,
     ReliablePacket,
     RemoveGameMessage
-} from "@skeldjs/protocol";
+} from "@skeldjs/au-protocol";
 
 import { ClientDisconnectEvent, ClientLeaveEvent } from "./api";
 import { fmtConfigurableLog } from "./util/fmtLogFormat";
@@ -32,8 +31,8 @@ export class SentPacket {
 
 export const logLanguages = {
     [Language.English]: "english",
-    [Language.SpanishAmericas]: "spanish (latin america)",
-    [Language.PortugueseBrazil]: "portuguese (brazil)",
+    [Language.Latam]: "spanish (latin america)",
+    [Language.Brazilian]: "portuguese (brazil)",
     [Language.Portuguese]: "portuguese",
     [Language.Korean]: "korean",
     [Language.Russian]: "russian",
@@ -44,8 +43,8 @@ export const logLanguages = {
     [Language.Italian]: "italian",
     [Language.Japanese]: "japanese",
     [Language.Spanish]: "spanish",
-    [Language.ChineseSimplified]: "chinese (simplified)",
-    [Language.ChineseTraditional]: "chinese (traditional)",
+    [Language.TChinese]: "chinese (traditional)",
+    [Language.SChinese]: "chinese (simplified)",
     [Language.Irish]: "irish"
 };
 
@@ -65,8 +64,8 @@ export const logPlatforms = {
 
 export const locales = {
     [Language.English]: "en",
-    [Language.SpanishAmericas]: "es_US",
-    [Language.PortugueseBrazil]: "pt_BR",
+    [Language.Latam]: "es_US",
+    [Language.Brazilian]: "pt_BR",
     [Language.Portuguese]: "pt",
     [Language.Korean]: "ko",
     [Language.Russian]: "ru",
@@ -77,8 +76,8 @@ export const locales = {
     [Language.Italian]: "it",
     [Language.Japanese]: "ja",
     [Language.Spanish]: "es_ES",
-    [Language.ChineseSimplified]: "zh",
-    [Language.ChineseTraditional]: "zh",
+    [Language.TChinese]: "zh",
+    [Language.SChinese]: "zh",
     [Language.Irish]: "ga"
 };
 
@@ -345,8 +344,8 @@ export class Connection {
             )
         );
 
-        this.server.logger.info("%s disconnected: %s (%s)",
-            this, reason ? DisconnectReason[reason] : "None", (messageJoined || DisconnectMessages[reason as keyof typeof DisconnectMessages] || "No message."));
+        this.server.logger.info("%s disconnected: %s",
+            this, reason ? DisconnectReason[reason] : "None");
 
         this.sentDisconnect = true;
         this.hasIdentified = false;

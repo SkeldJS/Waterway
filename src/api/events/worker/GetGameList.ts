@@ -1,6 +1,6 @@
-import { GameKeyword, GameMap } from "@skeldjs/constant";
+import { GameKeyword, GameMap } from "@skeldjs/au-core";
 import { CancelableEvent } from "@skeldjs/events";
-import { GameListing } from "@skeldjs/protocol";
+import { GameListing } from "@skeldjs/au-protocol";
 
 import { Connection } from "../../../Connection";
 

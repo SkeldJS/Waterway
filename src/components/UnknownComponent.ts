@@ -1,5 +1,5 @@
-import { StatefulRoom, NetworkedObject, SpawnType, DataState } from "@skeldjs/core";
-import { BaseDataMessage, BaseRpcMessage, UnknownDataMessage } from "@skeldjs/protocol";
+import { StatefulRoom, NetworkedObject, SpawnType, DataState } from "@skeldjs/au-core";
+import { BaseDataMessage, BaseRpcMessage, UnknownDataMessage } from "@skeldjs/au-protocol";
 import { HazelReader } from "@skeldjs/hazel";
 
 export class UnknownComponent<RoomType extends StatefulRoom> extends NetworkedObject<RoomType> {

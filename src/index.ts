@@ -14,6 +14,6 @@ export * from "./WaterwayServer";
 
 export * from "./i18n";
 
-export * from "@skeldjs/core";
-export * from "@skeldjs/protocol";
+export * from "@skeldjs/au-core";
+export * from "@skeldjs/au-protocol";
 export * from "@skeldjs/hazel";

@@ -1,4 +1,4 @@
-import { BaseRole } from "@skeldjs/core";
+import { BaseRole } from "@skeldjs/au-core";
 import { SomePluginCtr } from "../../handlers";
 import { ClassDecorator } from "../types";
 

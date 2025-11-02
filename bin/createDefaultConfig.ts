@@ -1,4 +1,4 @@
-import { Hat, Skin, Visor } from "@skeldjs/constant";
+import { Hat, Skin, Visor } from "@skeldjs/au-core";
 import { WaterwayConfig } from "../src";
 
 export function createDefaultConfig(): WaterwayConfig {

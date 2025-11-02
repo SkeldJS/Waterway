@@ -15,8 +15,9 @@ import {
     Platform,
     GameOverReason,
     RootMessageTag,
-    Filters
-} from "@skeldjs/constant";
+    Filters,
+    StatefulRoomConfig
+} from "@skeldjs/au-core";
 
 import {
     AcknowledgePacket,
@@ -55,11 +56,11 @@ import {
     WaitForHostMessage,
     SetActivePodTypeMessage,
     AllGameSettings
-} from "@skeldjs/protocol";
+} from "@skeldjs/au-protocol";
 
 import { HazelReader, HazelWriter } from "@skeldjs/hazel";
 import { EventEmitter, ExtractEventTypes } from "@skeldjs/events";
-import { RoomCode, RoomCodeVersion, Version } from "@skeldjs/client";
+import { RoomCode, RoomCodeVersion, Version } from "@skeldjs/au-client";
 
 import { recursiveAssign } from "./util/recursiveAssign";
 import { recursiveCompare } from "./util/recursiveCompare";
@@ -84,7 +85,6 @@ import { LoadedPlugin, PluginLoader, WorkerPlugin } from "./handlers";
 
 import i18n from "./i18n";
 import { Matchmaker } from "./Matchmaker";
-import { StatefulRoomConfig } from "@skeldjs/core";
 import { Logger } from "./Logger";
 
 const byteSizes = ["bytes", "kb", "mb", "gb", "tb"];
@@ -581,7 +581,7 @@ export type WorkerEvents = RoomEvents
     ]>;
 
 export class WaterwayServer extends EventEmitter<WorkerEvents> {
-    static serverVersion = "3.0.0";
+    static serverVersion = "3.0.2";
 
     /**
      * Logger for this server.

@@ -1,6 +1,6 @@
 import * as util from "util";
 
-import { Player } from "@skeldjs/core";
+import { Player } from "@skeldjs/au-core";
 
 import { Room, MessageSide } from "../Room";
 import { AccessCheckFn } from "../api";

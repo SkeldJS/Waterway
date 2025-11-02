@@ -1,4 +1,4 @@
-import { DisconnectReason } from "@skeldjs/constant";
+import { DisconnectReason } from "@skeldjs/au-core";
 import { BasicEvent } from "@skeldjs/events";
 
 import { Connection } from "../../../Connection";

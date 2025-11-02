@@ -1,5 +1,5 @@
 import { CancelableEvent } from "@skeldjs/events";
-import { BaseGameDataMessage, BaseRootMessage } from "@skeldjs/protocol";
+import { BaseGameDataMessage, BaseRootMessage } from "@skeldjs/au-protocol";
 import { Connection } from "../../../Connection";
 import { Room } from "../../../Room";
 import { ClientEvent } from "./ClientEvent";

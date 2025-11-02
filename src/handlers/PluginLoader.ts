@@ -34,7 +34,7 @@ import {
     SkeldShipStatus,
     SpawnType,
     VoteBanSystem
-} from "@skeldjs/core";
+} from "@skeldjs/au-core";
 
 import { Room, RoomEvents } from "../Room";
 import { WaterwayServer } from "../WaterwayServer";

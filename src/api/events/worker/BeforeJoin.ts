@@ -1,5 +1,5 @@
 import { CancelableEvent } from "@skeldjs/events";
-import { RoomCode } from "@skeldjs/client";
+import { RoomCode } from "@skeldjs/au-client";
 
 import { Connection } from "../../../Connection";
 import { Room } from "../../../Room";

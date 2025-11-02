@@ -1,4 +1,4 @@
-import { BaseRpcMessage } from "@skeldjs/protocol";
+import { BaseRpcMessage } from "@skeldjs/au-protocol";
 
 export interface RpcEvent {
     /**

@@ -1,5 +1,5 @@
 import { BasicEvent, CancelableEvent } from "@skeldjs/events";
-import { Player } from "@skeldjs/core";
+import { Player } from "@skeldjs/au-core";
 
 import { Room } from "../../../Room";
 
