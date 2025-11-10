@@ -211,6 +211,12 @@ function silentJsonParse(jsonString: string) {
     }
 }
 
+function isLoopbackAddress(ip: string|undefined) {
+    if (!ip) return false;
+    return /^127\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/i.test(ip) ||
+        /^::1$/.test(ip)
+}
+
 export class Matchmaker {
     logger: Logger;
 
@@ -322,7 +328,7 @@ export class Matchmaker {
     }
 
     getGameListing(fromAddress: string, room: Room): GameListingJson {
-        const listingIp = fromAddress === "127.0.0.1" || fromAddress === "::ffff:127.0.0.1"
+        const listingIp = isLoopbackAddress(fromAddress)
             ? "127.0.0.1"
             : this.server.config.socket.ip;
 
@@ -426,7 +432,7 @@ export class Matchmaker {
                 return;
             }
 
-            const listingIp = ctx.socket.remoteAddress !== "127.0.0.1" ? this.server.config.socket.ip : "127.0.0.1";
+            const listingIp = isLoopbackAddress(ctx.socket.remoteAddress) ? "127.0.0.1" : this.server.config.socket.ip;
 
             ctx.status = 200;
             ctx.body = {
@@ -441,7 +447,7 @@ export class Matchmaker {
                 return;
             }
 
-            const listingIp = ctx.socket.remoteAddress !== "127.0.0.1" ? this.server.config.socket.ip : "127.0.0.1";
+            const listingIp = isLoopbackAddress(ctx.socket.remoteAddress) ? "127.0.0.1" : this.server.config.socket.ip;
 
             ctx.status = 200;
             ctx.body = {

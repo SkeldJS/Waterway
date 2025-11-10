@@ -11,10 +11,10 @@ export function createDefaultConfig(): WaterwayConfig {
         defaultLanguage: "en",
         acceptedVersions: ["2025.7.15"],
         matchmaker: {
-            port: 22021
+            port: 22023
         },
         socket: {
-            port: 22023,
+            port: 22123,
             additionalPorts: [],
             acceptUnknownGameData: false,
             messageOrdering: false,
