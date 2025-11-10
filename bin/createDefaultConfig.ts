@@ -31,16 +31,6 @@ export function createDefaultConfig(): WaterwayConfig {
         plugins: {
             loadDirectory: true
         },
-        anticheat: {
-            penalty: {
-                action: "disconnect",
-                strikes: 2,
-                banAfterXDisconnects: 3,
-                banDuration: 3600,
-                disconnectMessage: "You have been banned for $duration."
-            },
-            rules: {}
-        },
         logging: {
             hideSensitiveInfo: false,
             playerColors: true,

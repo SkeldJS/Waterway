@@ -149,58 +149,6 @@ export type SocketConfig = {
     useDtlsLayout: boolean;
 }
 
-export type AnticheatPenalty = {
-    /**
-     * The action that should be applied on this user for breaking this rule.
-     */
-    action?: "disconnect" | "ban" | "ignore";
-    /**
-     * The number of strikes that this user has before they are penalised.
-     */
-    strikes?: number;
-    /**
-     * The number of general disconnects the player should have to have had
-     * for breaking this rule until they are banned.
-     */
-    banAfterXDisconnects?: number;
-    /**
-     * The length, in seconds, of how long to ban a player for breaking this
-     * rule.
-     */
-    banDuration?: number;
-    /**
-     * The message to give this player when disconnecting or banning this player.
-     */
-    disconnectMessage?: string;
-}
-
-export type AnticheatConfig = {
-    /**
-     * Global penalties for players brekaing any rule.
-     */
-    penalty: AnticheatPenalty;
-    /**
-     * Configuration for each individual rule.
-     */
-    rules: Record<string, AnticheatRuleConfig | string | number | boolean>;
-}
-
-export type AnticheatRuleConfig = {
-    /**
-     * The penalty to give a player for breaking this rule.
-     */
-    penalty: AnticheatPenalty;
-    /**
-     * The value of this rule, a boolean if it's a simple toggle,
-     * or an integer or string if it requires more specific configuration.
-     */
-    value: string | number | boolean;
-    /**
-     * Configuration for each individual sub-rule.
-     */
-    rules: Record<string, AnticheatRuleConfig | string | number | boolean>;
-}
-
 export type ConnectionsFormatOptions = "id" | "ip" | "ping" | "room" | "level" | "version" | "platform" | "language";
 export type RoomFormatOptions = "players" | "map" | "host" | "privacy";
 export type PlayerFormatOptions = "id" | "ping" | "level" | "ishost" | "platform" | "language";
@@ -551,10 +499,6 @@ export type WaterwayConfig = {
      * options.
      */
     plugins: PluginConfig;
-    /**
-     * Advanced options for HACS, Waterway's Anti-Cheat System.
-     */
-    anticheat: AnticheatConfig;
     /**
      * Options for logging.
      */

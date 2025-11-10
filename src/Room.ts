@@ -194,22 +194,6 @@ export type SendChatOptions = {
      * ```
      */
     side: MessageSide;
-    /**
-     * The player to send the message to, if omitted, sends to all players.
-     * @example
-     * ```ts
-     * // Alert the host of a hacker
-     * .@EventListener("anticheat.potential")
-     * onPotentialCheater(ev: AnticheatPotentialEvent) {
-     *   if (!ev.player.info)
-     *     return;
-     *
-     *   ev.room.sendChat("<color=red>Potential cheater detected: " + ev.player.info.name + "</color>", {
-     *     targets: [ ev.room.host ]
-     *   });
-     * }
-     * ```
-     */
     targets: Player<Room>[] | undefined;
     /**
      * The name of the player to appear as.

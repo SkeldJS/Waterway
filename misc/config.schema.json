@@ -226,67 +226,6 @@
         }
       }
     },
-    "anticheat": {
-      "type": "object",
-      "description": "Advanced options for HACS, Waterway's Anti-Cheat System.",
-      "properties": {
-        "penalty": {
-          "type": "object",
-          "description": "The penalty to give a player for breaking this rule.",
-          "properties": {
-            "action": {
-              "type": "string",
-              "description": "The action that should be applied on this user for breaking this rule.",
-              "enum": [
-                "disconnect",
-                "ban",
-                "ignore"
-              ]
-            },
-            "strikes": {
-              "type": "number",
-              "description": "The number of strikes that this user has before they are penalised."
-            },
-            "banAfterXDisconnects": {
-              "type": "number",
-              "description": "The number of general disconnects the player should have to have had for breaking this rule until they are banned."
-            },
-            "banDuration": {
-              "type": "number",
-              "description": "The length, in seconds, of how long to ban a player for breaking this rule."
-            },
-            "disconnectMessage": {
-              "type": "string",
-              "description": "The message to give this player when disconnecting or banning this player."
-            }
-          }
-        },
-        "rules": {
-          "description": "Configuration for each individual sub-rule.",
-          "patternProperties": {
-            ".+": {
-              "type": [
-                "boolean",
-                "number",
-                "object"
-              ],
-              "$ref": "#/properties/anticheat",
-              "patternProperties": {
-                ".+": {
-                  "type": [
-                    "array",
-                    "boolean",
-                    "number",
-                    "object",
-                    "string"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "logging": {
       "type": "object",
       "description": "Options for logging.",
