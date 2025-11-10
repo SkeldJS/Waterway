@@ -44,7 +44,7 @@ async function linkSkeldJs() {
     for (const skeldjsPackage of skeldjsPackages) {
         const localInstallationDir = path.resolve(__dirname, "..", "node_modules", "@skeldjs", skeldjsPackage);
         await fs.rm(localInstallationDir, { recursive: true, force: true });
-        await fs.symlink(path.resolve(baseSkeldjsDirectory, "packages", skeldjsPackage), localInstallationDir, "dir");
+        await fs.symlink(path.resolve(baseSkeldjsDirectory, "packages", skeldjsPackage.replace("au-", "")), localInstallationDir, "dir");
     }
 }
 

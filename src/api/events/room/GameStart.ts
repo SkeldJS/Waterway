@@ -4,6 +4,9 @@ import { Player } from "@skeldjs/au-core";
 import { Room } from "../../../Room";
 
 export class RoomGameStartEvent extends BasicEvent implements CancelableEvent {
+    static eventName = "room.gamestart" as const;
+    eventName = "room.gamestart" as const;
+
     canceled: boolean;
 
     constructor(

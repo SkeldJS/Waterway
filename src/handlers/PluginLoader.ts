@@ -940,7 +940,7 @@ export class PluginLoader {
             )
         );
 
-        if (ev.reverted) {
+        if (ev.pendingRevert) {
             if (initPlugin instanceof RoomPlugin) {
                 this.unloadPlugin(initPlugin, room!);
             } else {

@@ -76,7 +76,7 @@ import {
 } from "@skeldjs/au-core";
 
 import { RoomCode } from "@skeldjs/au-client";
-import { BasicEvent, ExtractEventTypes } from "@skeldjs/events";
+import { BasicEvent, EventMap, EventMapFromList } from "@skeldjs/events";
 import { HazelReader, HazelWriter, Vector2 } from "@skeldjs/hazel";
 
 import {
@@ -273,7 +273,7 @@ export enum RoomPrivacy {
     Private,
 }
 
-export type RoomEvents = StatefulRoomEvents<Room> & ExtractEventTypes<[
+export type RoomEvents = EventMapFromList<[
     ClientBroadcastEvent,
     ClientLeaveEvent,
     RoomBeforeDestroyEvent,
@@ -459,11 +459,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     async emit<Event extends BasicEvent>(event: Event): Promise<Event>;
     async emit<Event extends BasicEvent>(event: Event): Promise<Event> {
         const ev = await this.server.emit(event);
-
-        if ((ev as any).canceled || (ev as any).reverted) {
-            return ev;
-        }
-
         return super.emit(event);
     }
 
@@ -473,11 +468,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     async emitSerial<Event extends BasicEvent>(event: Event): Promise<Event>;
     async emitSerial<Event extends BasicEvent>(event: Event): Promise<Event> {
         const ev = await this.server.emitSerial(event);
-
-        if ((ev as any).canceled || (ev as any).reverted) {
-            return ev;
-        }
-
         return super.emitSerial(event);
     }
 
@@ -485,11 +475,6 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     emitSync<Event extends BasicEvent>(event: Event): Event;
     emitSync<Event extends BasicEvent>(event: Event): Event {
         const ev = this.server.emitSync(event);
-
-        if ((ev as any).canceled || (ev as any).reverted) {
-            return ev;
-        }
-
         return super.emitSync(event);
     }
 

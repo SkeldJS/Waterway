@@ -16,7 +16,8 @@ import {
     GameOverReason,
     RootMessageTag,
     Filters,
-    StatefulRoomConfig
+    StatefulRoomConfig,
+    StatefulRoomEvents
 } from "@skeldjs/au-core";
 
 import {
@@ -59,7 +60,7 @@ import {
 } from "@skeldjs/au-protocol";
 
 import { HazelReader, HazelWriter } from "@skeldjs/hazel";
-import { EventEmitter, ExtractEventTypes } from "@skeldjs/events";
+import { EventEmitter, EventMapFromList } from "@skeldjs/events";
 import { RoomCode, RoomCodeVersion, Version } from "@skeldjs/au-client";
 
 import { recursiveAssign } from "./util/recursiveAssign";
@@ -569,8 +570,9 @@ export type WaterwayConfig = {
     optimizations: OptimizationsConfig
 }
 
-export type WorkerEvents = RoomEvents
-    & ExtractEventTypes<[
+export type WaterwayServerEvents = StatefulRoomEvents<Room> &
+    RoomEvents &
+    EventMapFromList<[
         ClientBanEvent,
         ClientConnectEvent,
         ClientDisconnectEvent,
@@ -580,8 +582,8 @@ export type WorkerEvents = RoomEvents
         WorkerLoadPluginEvent
     ]>;
 
-export class WaterwayServer extends EventEmitter<WorkerEvents> {
-    static serverVersion = "3.0.2";
+export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
+    static serverVersion = "3.0.3";
 
     /**
      * Logger for this server.

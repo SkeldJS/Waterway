@@ -190,60 +190,60 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@skeldjs/au-client@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/au-client@npm:3.0.2"
-  checksum: 10/ddbf35eef473f4d35d0e178f531b3b23172ffe0534349cdc69f00022f5ae4700eb4fbdffd3a8481e048bcdff70cda1b39402a37a94567ae4d18282933a9dbf65
+"@skeldjs/au-client@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/au-client@npm:3.0.3"
+  checksum: 10/d83bcbf37568863ba874f19a631fd45db3737383689b33885f7a8261a83f486ee3f39bae7eee61d54f27da3c79037caa9aa5d9caf688f52150908f0ac2d4e110
   languageName: node
   linkType: hard
 
-"@skeldjs/au-constants@npm:3.0.2, @skeldjs/au-constants@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/au-constants@npm:3.0.2"
-  checksum: 10/86b4f16c95f68e0d63facd040ff82f780e24f5939cc254b880393206d8b2d68b6ec10a13299933d2e5054c370bca8ec0632657e44980f25d4b2bdd611c130c64
+"@skeldjs/au-constants@npm:3.0.3, @skeldjs/au-constants@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/au-constants@npm:3.0.3"
+  checksum: 10/47f6738bbdcc8c752ebd6814a38c67b561b7021f54d31c6b0046c3abe9d05d89325d7a5217c3be19b91c0ad93faca29ef12a99e90a517d5a1904b8d0755b3d0e
   languageName: node
   linkType: hard
 
-"@skeldjs/au-core@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/au-core@npm:3.0.2"
+"@skeldjs/au-core@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/au-core@npm:3.0.3"
   dependencies:
-    "@skeldjs/au-constants": "npm:3.0.2"
-    "@skeldjs/au-protocol": "npm:3.0.2"
-    "@skeldjs/events": "npm:3.0.2"
-    "@skeldjs/hazel": "npm:3.0.2"
-  checksum: 10/aaf773127258229e1ac050b110d3148a6a295ab5c23b111260c1989b13394ed0c7fc7692ea7812f2505a53b3cf1542368230da3424ecd5c4f0c403865db9f859
+    "@skeldjs/au-constants": "npm:3.0.3"
+    "@skeldjs/au-protocol": "npm:3.0.3"
+    "@skeldjs/events": "npm:3.0.3"
+    "@skeldjs/hazel": "npm:3.0.3"
+  checksum: 10/74a1b68a23a88137f155c8a3be154f1ef17f42d70f4cf4ddd908a4d878db8332efd5d6a9a8841e35995ea1a8f22e40893d5258e0e4e1a18bae0fdec71f08a58e
   languageName: node
   linkType: hard
 
-"@skeldjs/au-protocol@npm:3.0.2, @skeldjs/au-protocol@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/au-protocol@npm:3.0.2"
+"@skeldjs/au-protocol@npm:3.0.3, @skeldjs/au-protocol@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/au-protocol@npm:3.0.3"
   dependencies:
-    "@skeldjs/au-constants": "npm:3.0.2"
-    "@skeldjs/hazel": "npm:3.0.2"
-  checksum: 10/74393934303ce792130ca425d04a9769a135ce1efd6a3a6baffb12a6afbfc8d3111dc07e56bac26da94a634db9388d22041573b221512a13583b6b1d17595635
+    "@skeldjs/au-constants": "npm:3.0.3"
+    "@skeldjs/hazel": "npm:3.0.3"
+  checksum: 10/4c937b8bd7567359e6cd170fc190b6cba5dff39112b245339fb9d7d28ab03625184d51b4c812474e6c58f2157621212011020766987fe8c7eff1c3e0e5ba7e5a
   languageName: node
   linkType: hard
 
-"@skeldjs/au-text@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/au-text@npm:3.0.2"
-  checksum: 10/644e5210dc23f096f9d5f7b0400f583d5f92a4c507dc148d41d79a4cf70ea93e673d68466e1b549121e3e948f925ea2bf9505fd271f8e0f5e78e063c2637304e
+"@skeldjs/au-text@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/au-text@npm:3.0.3"
+  checksum: 10/5f2a948d8b1ec0be3175f0837cb9995c9e8b23d8fd46968200f979c0191e74045d549cc993bdf5507abf121282955607a1067985e94f9863150809bae0b88103
   languageName: node
   linkType: hard
 
-"@skeldjs/events@npm:3.0.2, @skeldjs/events@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/events@npm:3.0.2"
-  checksum: 10/2b93b8b308533caa0d79b77c1a734e606ad101569e4e681ae6d15b77931b9a723c72d4f8e255c286c525b11197515cb6d46b1a47866e14474bd6cd0cc33ce3bb
+"@skeldjs/events@npm:3.0.3, @skeldjs/events@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/events@npm:3.0.3"
+  checksum: 10/9c6aa038e8ed7432906c3928dd5198f07eda63ace7668e093135c080c88a69280bdceda0c685ba4eaeff2f4cdac934e0e97dd45068ed93c2960087d669316293
   languageName: node
   linkType: hard
 
-"@skeldjs/hazel@npm:3.0.2, @skeldjs/hazel@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@skeldjs/hazel@npm:3.0.2"
-  checksum: 10/a65bef3251f696cb030918e00c9506b313c8a025e41795912aa16f56ad5dd51c75d1fdc2ae6d2bb6d800506c8edbcf7cd0832d3d9b12e616c486e8f62d868470
+"@skeldjs/hazel@npm:3.0.3, @skeldjs/hazel@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "@skeldjs/hazel@npm:3.0.3"
+  checksum: 10/fe09f5b4649b82be2a41a8b45fa6d1325e8e1726999c6d0426f8853e8e7b2b79275484dd7fdc34afe4a0791c5d4b05b6c3b3ee5e8f913b865431c24215fcfc6b
   languageName: node
   linkType: hard
 
@@ -253,13 +253,13 @@ __metadata:
   dependencies:
     "@koa/router": "npm:^14.0.0"
     "@schemastore/package": "npm:^0.0.6"
-    "@skeldjs/au-client": "npm:^3.0.2"
-    "@skeldjs/au-constants": "npm:^3.0.2"
-    "@skeldjs/au-core": "npm:^3.0.2"
-    "@skeldjs/au-protocol": "npm:^3.0.2"
-    "@skeldjs/au-text": "npm:^3.0.2"
-    "@skeldjs/events": "npm:^3.0.2"
-    "@skeldjs/hazel": "npm:^3.0.2"
+    "@skeldjs/au-client": "npm:^3.0.3"
+    "@skeldjs/au-constants": "npm:^3.0.3"
+    "@skeldjs/au-core": "npm:^3.0.3"
+    "@skeldjs/au-protocol": "npm:^3.0.3"
+    "@skeldjs/au-text": "npm:^3.0.3"
+    "@skeldjs/events": "npm:^3.0.3"
+    "@skeldjs/hazel": "npm:^3.0.3"
     "@types/koa": "npm:^2"
     "@types/koa__router": "npm:^12"
     "@types/minimatch": "npm:^3.0.5"
@@ -272,7 +272,7 @@ __metadata:
     chokidar: "npm:^3.5.2"
     compare-versions: "npm:^3.6.0"
     dotenv: "npm:^10.0.0"
-    koa: "npm:^3.0.2"
+    koa: "npm:^3.0.3"
     koa-body: "npm:^6.0.1"
     minimatch: "npm:^3.0.4"
     pinst: "npm:^2.1.6"
@@ -1707,7 +1707,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"koa@npm:^3.0.2":
+"koa@npm:^3.0.3":
   version: 3.1.1
   resolution: "koa@npm:3.1.1"
   dependencies:

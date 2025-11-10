@@ -1,5 +1,5 @@
 import { BasicEvent } from "@skeldjs/events";
-import { WorkerEvents } from "../../WaterwayServer";
+import { WaterwayServerEvents } from "../../WaterwayServer";
 import { MethodDecorator } from "../types";
 
 const waterwayEventListenersKey = Symbol("waterway:events");
@@ -14,14 +14,14 @@ export interface PluginRegisteredEventListenerInfo {
  * emitted on the server or a room.
  * @param eventName The name of the event to listen for.
  */
-export function EventListener<EventName extends keyof WorkerEvents>(eventName: EventName): MethodDecorator<(ev: WorkerEvents[EventName]) => any>;
+export function EventListener<EventName extends keyof WaterwayServerEvents>(eventName: EventName): MethodDecorator<(ev: WaterwayServerEvents[EventName]) => any>;
 /**
  * A decorator to attach to a method to create a listener for an event that gets
  * emitted on the server or a room.
  * @param eventTarget The class of the plugin to create a listener for.
  * @param eventName The name of the event to listen for.
  */
-export function EventListener<EventName extends keyof WorkerEvents>(eventTarget: any, eventName: EventName): MethodDecorator<(ev: WorkerEvents[EventName]) => any>;
+export function EventListener<EventName extends keyof WaterwayServerEvents>(eventTarget: any, eventName: EventName): MethodDecorator<(ev: WaterwayServerEvents[EventName]) => any>;
 /**
  * A decorator to attach to a method to create a listener for an event that gets
  * emitted on the server, a room or another plugin.
