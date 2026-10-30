@@ -107,6 +107,7 @@ import { Logger } from "./Logger";
 import { fmtConfigurableLog } from "./util/fmtLogFormat";
 
 import { Connection, logLanguages, logPlatforms } from "./Connection";
+import { hasDisableServerAuthorityFlag } from "./CompatibilityManager";
 import { LoggingConfig, RoomsConfig, WaterwayServer } from "./WaterwayServer";
 
 function getPlayerChalkColor(config: LoggingConfig, player: Player<Room>): chalk.Chalk {
@@ -364,6 +365,19 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         this.privacy = RoomPrivacy.Private;
 
         this.logger = new Logger(() => util.inspect(this.code, true, null, true), this.server.vorpal);
+
+        // If the server is authoritative but the client that created this room requested host
+        // authority (using the +25 disable-server-authority version flag) and the config allows
+        // it, this room uses host authority instead of server authority.
+        if (this.config.authoritativeServer
+            && this.config.allowHostAuthority
+            && this.createdBy
+            && hasDisableServerAuthorityFlag(this.createdBy.clientVersion)) {
+            this.config.authoritativeServer = false;
+            this.authorityId = 0;
+            this.logger.info("%s requested host authority, this room will use host authority instead of server authority",
+                this.createdBy);
+        }
 
         this.on("player.setname", async ev => {
             if (ev.oldName) {
@@ -1285,7 +1299,7 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
                     new AlterGameMessage(
                         this.code.id,
                         AlterGameTag.ChangePrivacy,
-                        this.privacy === RoomPrivacy.Private ? 1 : 0
+                        this.privacy === RoomPrivacy.Public ? 1 : 0
                     )
                 ]
             )
@@ -1305,6 +1319,9 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         const joiningPlayer = await this.handleJoin(joinData);
 
         if (!joiningPlayer) return;
+
+        this.logger.info("%s joining room %s",
+            joiningClient, this);
 
         if (this.isAuthoritative) {
             if (this.actingHosts.size === 0) {

@@ -9,7 +9,7 @@ export function createDefaultConfig(): WaterwayConfig {
         autoUpdate: false,
         exitConfirmation: true,
         defaultLanguage: "en",
-        acceptedVersions: ["2025.7.15"],
+        acceptedVersions: [],
         matchmaker: {
             port: 22023
         },
@@ -53,6 +53,7 @@ export function createDefaultConfig(): WaterwayConfig {
             gameCodes: "v2",
             enforceSettings: {},
             authoritativeServer: false,
+            allowHostAuthority: false,
             advanced: {
                 unknownObjects: false
             },

@@ -368,6 +368,45 @@ export class Matchmaker {
             }
         }
 
+        router.get("/", ctx => {
+            ctx.status = 200;
+            ctx.type = "html";
+            ctx.body = [
+                "<!DOCTYPE html>",
+                "<html lang=\"en\">",
+                "<head>",
+                "    <meta charset=\"utf-8\">",
+                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+                "    <title>Waterway Server</title>",
+                "    <style>",
+                "        body {",
+                "            display: flex;",
+                "            justify-content: center;",
+                "            align-items: center;",
+                "            min-height: 100vh;",
+                "            margin: 0;",
+                "            background: #0b1a2a;",
+                "            color: #e0f0ff;",
+                "            font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif;",
+                "            text-align: center;",
+                "        }",
+                "        main { padding: 2rem; }",
+                "        h1 { color: #4db8ff; margin-bottom: 0.5rem; }",
+                "        p { margin: 0.5rem 0; }",
+                "        a { color: #4db8ff; }",
+                "    </style>",
+                "</head>",
+                "<body>",
+                "    <main>",
+                "        <h1>This server is happily sailing on Waterway</h1>",
+                "        <p>Thank you for using Waterway</p>",
+                "        <p>Visit <a href=\"https://github.com/SkeldJS/Waterway\">https://github.com/SkeldJS/Waterway</a> to learn more</p>",
+                "    </main>",
+                "</body>",
+                "</html>"
+            ].join("\n");
+        });
+
         router.post("/api/user", async (ctx) => {
             const body = (ctx.request as any).body;
             if (ctx.req.headers["content-type"] !== "application/json") {
@@ -713,7 +752,10 @@ export class Matchmaker {
         });
 
         router.get("/api/filtertags", ctx => {
-            // TODO: when does this get called?
+            // The client unions these into its built-in default tags
+            // (FilterTagManager.HandleRefreshedTags -> ResetToDefaults + UnionWith),
+            // so an empty list means "no extra server-side tags" and keeps the
+            // client's own localized defaults.
             ctx.status = 200;
             ctx.body = [];
         });

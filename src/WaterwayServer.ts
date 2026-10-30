@@ -63,6 +63,14 @@ import { HazelReader, HazelWriter } from "@skeldjs/hazel";
 import { EventEmitter, EventMapFromList } from "@skeldjs/events";
 import { RoomCode, RoomCodeVersion, Version } from "@skeldjs/au-client";
 
+import {
+    CompatibilityManager,
+    DisconnectMessages,
+    VersionCompareResult,
+    hasDisableServerAuthorityFlag,
+    normalizeVersion
+} from "./CompatibilityManager";
+
 import { recursiveAssign } from "./util/recursiveAssign";
 import { recursiveCompare } from "./util/recursiveCompare";
 import { recursiveClone } from "./util/recursiveClone";
@@ -385,6 +393,20 @@ export type RoomsConfig = StatefulRoomConfig & {
      */
     authoritativeServer: boolean;
     /**
+     * Whether to allow clients that request host authority (i.e. clients
+     * playing on a modded Among Us that disables server authority) to connect.
+     *
+     * When the server is authoritative ({@link RoomsConfig.authoritativeServer})
+     * and the client that creates a room has requested host authority, that
+     * room will automatically use host authority (the player who created it
+     * becomes the authority) instead of server authority.
+     *
+     * Note that these client code paths are less well tested and may contain
+     * bugs that can't be fixed server-side, use with caution.
+     * @default false
+     */
+    allowHostAuthority: boolean;
+    /**
      * Default appearance for a message sent by the server in game chat
      */
     serverPlayer: ServerPlayerOptions;
@@ -480,6 +502,14 @@ export type WaterwayConfig = {
     defaultLanguage: string;
     /**
      * Accepted game versions that clients can connect with.
+     *
+     * If this is left empty, Waterway will use its built-in list of supported
+     * versions (grouped by which versions are able to play together). Clients
+     * with unsupported versions will be sent a message telling them whether
+     * their game is too old or too new for this server.
+     *
+     * If this is not empty, only the exact versions listed here will be
+     * accepted.
      */
     acceptedVersions: string[];
     /**
@@ -581,6 +611,18 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
 
     protected acceptedVersions: number[];
 
+    /**
+     * Used when {@link WaterwayConfig.acceptedVersions} is empty, to determine
+     * which versions can connect and which versions can play together.
+     */
+    protected compatibilityManager: CompatibilityManager;
+
+    /**
+     * Whether the server is using Waterway's built-in list of supported game
+     * versions, instead of the versions specified in the config.
+     */
+    protected isUsingDefaultVersions: boolean;
+
     constructor(
         /**
          * The name of the cluster that this node is apart of.
@@ -622,7 +664,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         this.connections = new Map;
         this.rooms = new Map;
 
-        this.acceptedVersions = config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
+        this.compatibilityManager = new CompatibilityManager();
+        this.isUsingDefaultVersions = !config.acceptedVersions || config.acceptedVersions.length === 0;
+        this.acceptedVersions = this.isUsingDefaultVersions
+            ? []
+            : config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
 
         this.vorpal.delimiter(chalk.greenBright("waterway~$")).show();
         this.vorpal
@@ -1228,7 +1274,31 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     }
 
     isVersionAccepted(version: Version): boolean {
-        return this.acceptedVersions.indexOf(version.toEncoded()) !== -1;
+        if (this.isUsingDefaultVersions) {
+            return this.compatibilityManager.canConnectToServer(version) === VersionCompareResult.Compatible;
+        }
+
+        return this.acceptedVersions.indexOf(normalizeVersion(version).toEncoded()) !== -1;
+    }
+
+    /**
+     * Compare a client's game version against the versions that this server
+     * accepts.
+     *
+     * When {@link WaterwayConfig.acceptedVersions} is empty, this uses the
+     * built-in version list and will tell you whether the client's game is too
+     * old or too new for this server. Otherwise, it only tells you whether the
+     * exact version is accepted or not.
+     * @param version The client's game version.
+     */
+    canConnectToServer(version: Version): VersionCompareResult {
+        if (this.isUsingDefaultVersions) {
+            return this.compatibilityManager.canConnectToServer(version);
+        }
+
+        return this.isVersionAccepted(version)
+            ? VersionCompareResult.Compatible
+            : VersionCompareResult.Unknown;
     }
 
     async pollClientReliability() {
@@ -1374,6 +1444,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
 
         recursiveAssign(this.config, newConfig);
+
+        this.isUsingDefaultVersions = !this.config.acceptedVersions || this.config.acceptedVersions.length === 0;
+        this.acceptedVersions = this.isUsingDefaultVersions
+            ? []
+            : this.config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
     }
 
     sendRawPacket(listenSocket: dgram.Socket, remote: dgram.RemoteInfo, buffer: Buffer) {
@@ -1458,11 +1533,39 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         sender.platform = helloPacket.platform;
         sender.playerLevel = 0;
 
-        if (!this.isVersionAccepted(sender.clientVersion)) {
+        const versionCompareResult = this.canConnectToServer(sender.clientVersion);
+        if (versionCompareResult !== VersionCompareResult.Compatible) {
+            if (this.isUsingDefaultVersions) {
+                this.logger.warn("%s connected with unsupported client version: %s",
+                    sender, sender.clientVersion.toString());
+
+                const message = versionCompareResult === VersionCompareResult.ClientTooOld
+                    ? DisconnectMessages.VersionClientTooOld
+                    : versionCompareResult === VersionCompareResult.ServerTooOld
+                        ? DisconnectMessages.VersionServerTooOld
+                        : DisconnectMessages.VersionUnsupported;
+
+                await sender.disconnect(message);
+                return;
+            }
+
             this.logger.warn("%s connected with invalid client version: %s",
                 sender, sender.clientVersion.toString());
             sender.disconnect(DisconnectReason.IncorrectVersion);
             return;
+        }
+
+        // Warn when players connect using the +25 flag that disables server
+        // authority. This changes game behaviour, so we'd like to know if it's
+        // in use.
+        if (hasDisableServerAuthorityFlag(sender.clientVersion)) {
+            if (!this.config.rooms.allowHostAuthority) {
+                this.logger.info("%s kicked because they requested host authority.", sender);
+                await sender.disconnect(DisconnectMessages.HostAuthorityUnsupported);
+                return;
+            }
+
+            this.logger.info("%s connected with server authority disabled, please mention that this mode is in use when asking for support.", sender);
         }
 
         this.logger.info("%s connected, language: %s",
@@ -2059,9 +2162,6 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
                 }
             }
         }
-
-        this.logger.info("%s joining room %s",
-            connection, ev.alteredRoom);
 
         await ev.alteredRoom.handleRemoteJoin(connection);
     }
