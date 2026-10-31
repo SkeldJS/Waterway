@@ -163,3 +163,6 @@ docs
 /pages/Getting Started/Configuration.md
 /config.schema.json
 release
+
+# SkeldJS checkout created by scripts/fetchSkeldjs.js
+/skeldjs/

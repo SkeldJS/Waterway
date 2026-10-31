@@ -1,0 +1,13 @@
+.git
+.github
+**/node_modules
+**/dist
+skeldjs
+.yarn/*
+!.yarn/releases
+release
+docs
+plugins
+logs.txt
+*.log
+config.json
