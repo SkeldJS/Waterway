@@ -83,6 +83,52 @@
         }
       }
     },
+    "account": {
+      "type": "object",
+      "description": "Account binding through temporary game codes.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether puid/friend code binding through temporary game codes is active.",
+          "default": true
+        },
+        "gameCodeLifetimeSeconds": {
+          "type": "number",
+          "description": "How long an issued temporary game code stays valid, in seconds.",
+          "default": 180
+        },
+        "sessionLifetimeMinutes": {
+          "type": "number",
+          "description": "How long a token session is kept, in minutes.",
+          "default": 30
+        },
+        "rejectUnmatched": {
+          "type": "boolean",
+          "description": "Whether players that could not be bound to an account are disconnected.",
+          "default": false
+        },
+        "resolveFriendCode": {
+          "type": "boolean",
+          "description": "Whether friend codes are fetched from the backend when a token is requested.",
+          "default": true
+        },
+        "friendCodeEndpoint": {
+          "type": "string",
+          "description": "The endpoint that returns the friend code of the token owner. The player's login token is sent to it, so only point it at a backend you trust.",
+          "default": "https://backend.innersloth.com/api/user/username"
+        },
+        "friendCodeCacheMinutes": {
+          "type": "number",
+          "description": "How long a fetched friend code is cached, in minutes.",
+          "default": 30
+        },
+        "friendCodeTimeoutSeconds": {
+          "type": "number",
+          "description": "The timeout of the friend code request, in seconds.",
+          "default": 5
+        }
+      }
+    },
     "socket": {
       "type": "object",
       "description": "Options regarding the socket that the server listens on.",

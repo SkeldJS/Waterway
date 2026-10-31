@@ -8,6 +8,7 @@ export * from "./handlers";
 
 export * from "./Connection";
 export * from "./CompatibilityManager";
+export * from "./AccountAuth";
 export * from "./Logger";
 export * from "./Matchmaker";
 export * from "./Room";

@@ -13,6 +13,16 @@ export function createDefaultConfig(): WaterwayConfig {
         matchmaker: {
             port: 22023
         },
+        account: {
+            enabled: true,
+            gameCodeLifetimeSeconds: 180,
+            sessionLifetimeMinutes: 30,
+            rejectUnmatched: false,
+            resolveFriendCode: true,
+            friendCodeEndpoint: "https://backend.innersloth.com/api/user/username",
+            friendCodeCacheMinutes: 30,
+            friendCodeTimeoutSeconds: 5
+        },
         socket: {
             port: 22123,
             additionalPorts: [],

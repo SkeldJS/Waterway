@@ -94,6 +94,7 @@ import { LoadedPlugin, PluginLoader, WorkerPlugin } from "./handlers";
 
 import i18n from "./i18n";
 import { Matchmaker } from "./Matchmaker";
+import { AccountAuthManager, AccountConfig, AccountDisconnectMessages } from "./AccountAuth";
 import { Logger } from "./Logger";
 
 const byteSizes = ["bytes", "kb", "mb", "gb", "tb"];
@@ -517,6 +518,10 @@ export type WaterwayConfig = {
      */
     matchmaker: boolean | MatchmakerConfig;
     /**
+     * Account binding through temporary game codes.
+     */
+    account: AccountConfig;
+    /**
      * Options regarding the socket that the server listens on.
      */
     socket: SocketConfig;
@@ -585,6 +590,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
      * The Http matchmaker for the server, if enabled, see {@link WaterwayConfig.matchmaker}.
      */
     matchmaker: Matchmaker|undefined;
+
+    /**
+     * Account binding for token sessions, see {@link WaterwayConfig.account}.
+     */
+    accountAuth: AccountAuthManager;
 
     /**
      * All client connections connected to this server, mapped by their address:port,
@@ -656,6 +666,8 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         this.loadedPlugins = new Map;
 
         this.listenSockets = new Map;
+
+        this.accountAuth = new AccountAuthManager(this, this.config.account);
 
         if (this.config.matchmaker)
             this.matchmaker = new Matchmaker(this);
@@ -1593,8 +1605,65 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
     }
 
+    // Binds the http token session to this connection. Code 0 means hosting.
+    // Returns the real game code to join, or not ok when the client was disconnected.
+    async bindAccount(connection: Connection, code: number): Promise<{ ok: boolean; target: number }> {
+        const accounts = this.accountAuth;
+        if (!accounts.enabled)
+            return { ok: true, target: code };
+
+        if (connection.puid !== undefined) {
+            // Already bound, only a temporary code needs swapping.
+            if (code !== 0) {
+                const target = accounts.tryResolveAlias(code, connection.puid);
+                if (target !== null)
+                    return { ok: true, target };
+            }
+
+            return { ok: true, target: code };
+        }
+
+        const result = code === 0
+            ? accounts.claimHost(connection.username, connection.language, connection.clientVersion.toEncoded())
+            : accounts.claimJoin(code, connection.username, connection.language, connection.clientVersion.toEncoded());
+
+        if (result.conflict) {
+            this.logger.warn("%s could not be bound, another player with the same name is claiming a game, disconnecting",
+                connection);
+            await connection.disconnect(AccountDisconnectMessages.AuthenticationFailedRetry);
+            return { ok: false, target: code };
+        }
+
+        if (!result.claim) {
+            this.logger.warn("%s could not be bound to an account (game code %s), %s",
+                connection, new RoomCode(code), accounts.rejectUnmatched
+                    ? "disconnecting because account.rejectUnmatched is enabled"
+                    : "allowed in anonymously");
+
+            if (accounts.rejectUnmatched) {
+                await connection.disconnect(AccountDisconnectMessages.AccountUnmatched);
+                return { ok: false, target: code };
+            }
+
+            return { ok: true, target: code };
+        }
+
+        connection.puid = result.claim.puid;
+        connection.friendCode = result.claim.friendCode;
+        connection.joinAlias = result.claim.alias;
+
+        this.logger.info("%s bound to %s (%s)",
+            connection, result.claim.puid, result.claim.friendCode || "no friend code");
+
+        return { ok: true, target: code === 0 ? 0 : result.claim.target };
+    }
+
     async handleHostGameMessage(message: C2SHostGameMessage, sender: Connection) {
         if (sender.room)
+            return;
+
+        const bindResult = await this.bindAccount(sender, 0);
+        if (!bindResult.ok)
             return;
 
         const roomCode = this.generateRoomCode(this.config.rooms.gameCodes === "v1" ? 4 : 6);
@@ -1626,14 +1695,20 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     }
 
     async handleJoinGameMessage(message: C2SJoinGameMessage, sender: Connection) {
+        const bindResult = await this.bindAccount(sender, message.gameId);
+        if (!bindResult.ok)
+            return;
+
+        const gameId = bindResult.target;
+
         if (
             sender.room &&
             sender.room.gameState !== GameState.Ended && // extra checks so you can join back the same game after it has ended
-            sender.room.code.id !== message.gameId
+            sender.room.code.id !== gameId
         )
             return;
 
-        await this.attemptJoin(sender, new RoomCode(message.gameId));
+        await this.attemptJoin(sender, new RoomCode(gameId));
     }
 
     async handleQueryPlatformIdsMessage(message: QueryPlatformIdsMessage, sender: Connection) {
@@ -1775,7 +1850,7 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
                 room.settings.map,
                 room.settings.numImpostors,
                 room.settings.maxPlayers,
-                room.playerAuthority?.platform || new PlatformSpecificData(
+                room.getHostConnection()?.platform || new PlatformSpecificData(
                     Platform.Unknown,
                     "UNKNOWN"
                 )
@@ -2074,7 +2149,7 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
 
         let roomCode = len === 4 ? RoomCode.generateRandom(RoomCodeVersion.V1) : RoomCode.generateRandom(RoomCodeVersion.V2);
-        while (this.rooms.get(roomCode.id))
+        while (this.rooms.get(roomCode.id) || this.accountAuth.isAlias(roomCode.id))
             roomCode = len === 4 ? RoomCode.generateRandom(RoomCodeVersion.V1) : RoomCode.generateRandom(RoomCodeVersion.V2);
 
         return roomCode;
