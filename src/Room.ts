@@ -107,6 +107,7 @@ import { Logger } from "./Logger";
 import { fmtConfigurableLog } from "./util/fmtLogFormat";
 
 import { Connection, logLanguages, logPlatforms } from "./Connection";
+import { hasDisableServerAuthorityFlag } from "./CompatibilityManager";
 import { LoggingConfig, RoomsConfig, WaterwayServer } from "./WaterwayServer";
 
 function getPlayerChalkColor(config: LoggingConfig, player: Player<Room>): chalk.Chalk {
@@ -365,6 +366,19 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
 
         this.logger = new Logger(() => util.inspect(this.code, true, null, true), this.server.vorpal);
 
+        // If the server is authoritative but the client that created this room requested host
+        // authority (using the +25 disable-server-authority version flag) and the config allows
+        // it, this room uses host authority instead of server authority.
+        if (this.config.authoritativeServer
+            && this.config.allowHostAuthority
+            && this.createdBy
+            && hasDisableServerAuthorityFlag(this.createdBy.clientVersion)) {
+            this.config.authoritativeServer = false;
+            this.authorityId = 0;
+            this.logger.info("%s requested host authority, this room will use host authority instead of server authority",
+                this.createdBy);
+        }
+
         this.on("player.setname", async ev => {
             if (ev.oldName) {
                 this.logger.info("%s changed their name from %s to %s",
@@ -490,17 +504,32 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     }
 
     /**
+     * The connection of the room's host: the player authority in peer-to-peer
+     * authority mode, otherwise the acting host or the room's creator.
+     */
+    getHostConnection(): Connection|undefined {
+        const authorityConnection = this.playerAuthority && this.connections.get(this.playerAuthority.clientId);
+        if (authorityConnection)
+            return authorityConnection;
+
+        for (const actingHost of this.actingHosts)
+            return actingHost;
+
+        return this.createdBy;
+    }
+
+    /**
      * The name of the room, or just the code formatted as a string.
      *
      * @example REDSUS
      * @example LOCAL
      */
     get roomName() {
-        if (this.roomNameOverride !== undefined) {
+        if (this.roomNameOverride) {
             return this.roomNameOverride;
         }
 
-        const hostConnection = this.playerAuthority ? this.connections.get(this.playerAuthority.clientId) : undefined;
+        const hostConnection = this.getHostConnection();
 
         return hostConnection?.username || this.code.toString();
     }
@@ -1254,7 +1283,7 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
         if (cachedPlayer)
             return cachedPlayer;
 
-        const player = new Player(this, joinInfo.clientId, joinInfo.playerName, joinInfo.platform, joinInfo.playerLevel);
+        const player = new Player(this, joinInfo.clientId, joinInfo.playerName, joinInfo.platform, joinInfo.playerLevel, joinInfo.friendCode, joinInfo.puid);
         this.players.set(joinInfo.clientId, player);
 
         return player;
@@ -1270,26 +1299,34 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
     }
 
     async finishJoiningGame(joiningClient: Connection) {
+        const gameId = joiningClient.joinAlias || this.code.id;
+
         await joiningClient.sendPacket(
             new ReliablePacket(
                 joiningClient.getNextNonce(),
                 [
                     new JoinedGameMessage(
-                        this.code.id,
+                        gameId,
                         joiningClient.clientId,
                         // For now, the authority belongs to either the actual host or the server when it comes to
                         // handling the player joining. Once they have changed scene, they will become an acting host.
                         this.authorityId,
                         this.getOtherClientJoinData(joiningClient),
                     ),
+                    // After a temporary code got the client here, tell it the real one.
+                    ...(joiningClient.joinAlias
+                        ? [ new S2CHostGameMessage(this.code.id) ]
+                        : []),
                     new AlterGameMessage(
                         this.code.id,
                         AlterGameTag.ChangePrivacy,
-                        this.privacy === RoomPrivacy.Private ? 1 : 0
+                        this.privacy === RoomPrivacy.Public ? 1 : 0
                     )
                 ]
             )
         );
+
+        joiningClient.joinAlias = 0;
     }
 
     async handleRemoteJoin(joiningClient: Connection) {
@@ -1298,13 +1335,16 @@ export class Room extends StatefulRoom<Room, RoomEvents> {
             joiningClient.username,
             joiningClient.platform,
             joiningClient.playerLevel,
-            "", // todo: combine worker with matchmaker
-            ""
+            joiningClient.puid || "",
+            joiningClient.friendCode || ""
         );
 
         const joiningPlayer = await this.handleJoin(joinData);
 
         if (!joiningPlayer) return;
+
+        this.logger.info("%s joining room %s",
+            joiningClient, this);
 
         if (this.isAuthoritative) {
             if (this.actingHosts.size === 0) {

@@ -7,10 +7,11 @@ import * as crypto from "crypto";
 import * as KoaRouter from "@koa/router";
 import { HazelWriter } from "@skeldjs/hazel";
 import { RoomCode, Version } from "@skeldjs/au-client";
-import { DisconnectReason, Filters, GameKeyword, GameMap, GameMode, Platform, QuickChatMode, StringName } from "@skeldjs/au-core";
+import { DisconnectReason, Filters, GameKeyword, GameMap, GameMode, Language, Platform, QuickChatMode, StringName } from "@skeldjs/au-core";
 
 import { WaterwayServer } from "./WaterwayServer";
 import { Room, RoomPrivacy } from "./Room";
+import { AccountSession } from "./AccountAuth";
 import { Logger } from "./Logger";
 
 export type GameListingJson = {
@@ -19,13 +20,14 @@ export type GameListingJson = {
     GameId: number;
     HostName: string;
     TrueHostName: string;
+    HostPlatformName: string;
+    QuickChat: number;
     PlayerCount: number;
     Age: number;
     MapId: number;
     NumImpostors: number;
     MaxPlayers: number;
     Platform: number;
-    HostPlatformName: string;
     Language: number;
     Options: string;
 }
@@ -237,7 +239,27 @@ export class Matchmaker {
         return allPorts[~~(Math.random() * allPorts.length)];
     }
 
-    generateMatchmakerToken(puid: string, clientVersion: number) {
+    generateMatchmakerToken(puid: string, username: string, clientVersion: number, language: Language, bearerToken: string|undefined): Promise<string> {
+        const accounts = this.server.accountAuth;
+
+        if (accounts.enabled) {
+            // The session id goes into the token hash; sessions are kept in memory.
+            return accounts.friendCodes.resolve(puid, bearerToken).then(friendCode => {
+                const sessionId = accounts.createSession(puid, friendCode, username, clientVersion, language);
+
+                const payload = {
+                    Content: {
+                        Puid: puid,
+                        ClientVersion: clientVersion,
+                        ExpiresAt: new Date(Date.now() + accounts.sessionLifetimeMs).toISOString()
+                    },
+                    Hash: sessionId
+                };
+
+                return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+            });
+        }
+
         const payloadContent = {
             Puid: puid,
             ClientVersion: clientVersion,
@@ -252,7 +274,7 @@ export class Matchmaker {
             Hash: computedHash.toString("base64")
         };
 
-        return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+        return Promise.resolve(Buffer.from(JSON.stringify(payload), "utf8").toString("base64"));
     }
 
     verifyMatchmakerToken(token: string) {
@@ -327,7 +349,30 @@ export class Matchmaker {
         return true;
     }
 
-    getGameListing(fromAddress: string, room: Room): GameListingJson {
+    // Resolves the bearer token to an account session when account binding is enabled.
+    getSessionFromRequest(ctx: KoaRouter.RouterContext): AccountSession|null {
+        const accounts = this.server.accountAuth;
+        if (!accounts.enabled)
+            return null;
+
+        const authorization = ctx.headers.authorization;
+
+        if (!authorization)
+            return null;
+
+        const [tokenType, token] = authorization.split(" ");
+
+        if (!tokenType || !token || tokenType !== "Bearer")
+            return null;
+
+        const decoded = silentJsonParse(Buffer.from(token, "base64").toString("utf8")) as MatchmakerTokenPayload|undefined;
+        if (!decoded || typeof decoded.Hash !== "string")
+            return null;
+
+        return accounts.getSession(decoded.Hash);
+    }
+
+    getGameListing(fromAddress: string, room: Room, session?: AccountSession|null): GameListingJson {
         const listingIp = isLoopbackAddress(fromAddress)
             ? "127.0.0.1"
             : this.server.config.socket.ip;
@@ -336,19 +381,23 @@ export class Matchmaker {
         settingsWriter.write(room.settings, false, 10);
 
         const roomAge = Math.floor((Date.now() - room.createdAt) / 1000);
+        const hostConnection = room.getHostConnection();
         const gameListing: GameListingJson = {
             IP: Buffer.from(listingIp.split(".").map(x => parseInt(x))).readUInt32LE(0),
             Port: this.getRandomWorkerPort(),
-            GameId: room.code.id,
+            GameId: session
+                ? this.server.accountAuth.issueAlias(session, room.code.id, code => this.server.rooms.has(code))
+                : room.code.id,
             HostName: room.roomName,
-            TrueHostName: room.playerAuthority?.username || "Server",
+            TrueHostName: room.roomName,
+            HostPlatformName: hostConnection?.platform.platformName || "UNKNOWN",
+            QuickChat: hostConnection?.chatMode ?? QuickChatMode.QuickChat,
             PlayerCount: room.players.size,
             Age: roomAge,
             MapId: room.settings.map,
             NumImpostors: room.settings.numImpostors,
             MaxPlayers: room.settings.maxPlayers,
-            Platform: room.playerAuthority?.platform.platformTag || Platform.Unknown,
-            HostPlatformName: room.playerAuthority?.platform.platformName || "UNKNOWN",
+            Platform: hostConnection?.platform.platformTag || Platform.Unknown,
             Language: room.settings.keywords,
             Options: settingsWriter.toString("base64"),
         };
@@ -367,6 +416,45 @@ export class Matchmaker {
                 router[method](route, body.bind(loadedPlugin.pluginInstance) as any);
             }
         }
+
+        router.get("/", ctx => {
+            ctx.status = 200;
+            ctx.type = "html";
+            ctx.body = [
+                "<!DOCTYPE html>",
+                "<html lang=\"en\">",
+                "<head>",
+                "    <meta charset=\"utf-8\">",
+                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+                "    <title>Waterway Server</title>",
+                "    <style>",
+                "        body {",
+                "            display: flex;",
+                "            justify-content: center;",
+                "            align-items: center;",
+                "            min-height: 100vh;",
+                "            margin: 0;",
+                "            background: #0b1a2a;",
+                "            color: #e0f0ff;",
+                "            font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif;",
+                "            text-align: center;",
+                "        }",
+                "        main { padding: 2rem; }",
+                "        h1 { color: #4db8ff; margin-bottom: 0.5rem; }",
+                "        p { margin: 0.5rem 0; }",
+                "        a { color: #4db8ff; }",
+                "    </style>",
+                "</head>",
+                "<body>",
+                "    <main>",
+                "        <h1>This server is happily sailing on Waterway</h1>",
+                "        <p>Thank you for using Waterway</p>",
+                "        <p>Visit <a href=\"https://github.com/SkeldJS/Waterway\">https://github.com/SkeldJS/Waterway</a> to learn more</p>",
+                "    </main>",
+                "</body>",
+                "</html>"
+            ].join("\n");
+        });
 
         router.post("/api/user", async (ctx) => {
             const body = (ctx.request as any).body;
@@ -415,13 +503,26 @@ export class Matchmaker {
                 this.logger.info("Client %s (%s) got a matchmaker token", chalk.blue(body.Username), chalk.grey(body.Puid));
             }
 
-            const mmToken = this.generateMatchmakerToken(body.Puid, body.ClientVersion);
+            const authorization = ctx.headers.authorization;
+            const bearerToken = authorization && authorization.startsWith("Bearer ")
+                ? authorization.slice("Bearer ".length)
+                : undefined;
+
+            const mmToken = await this.generateMatchmakerToken(body.Puid, body.Username, body.ClientVersion, body.Language, bearerToken);
             ctx.status = 200;
             ctx.body = mmToken;
         });
 
         router.post("/api/games", ctx => {
-            if (!this.verifyRequest(ctx)) {
+            const session = this.getSessionFromRequest(ctx);
+
+            if (this.server.accountAuth.enabled) {
+                // 401 makes the client refresh its token and retry.
+                if (!session) {
+                    ctx.status = 401;
+                    return;
+                }
+            } else if (!this.verifyRequest(ctx)) {
                 ctx.status = 401;
                 return;
             }
@@ -431,6 +532,9 @@ export class Matchmaker {
                 ctx.status = 400;
                 return;
             }
+
+            if (session)
+                this.server.accountAuth.expectJoin(session, parseInt(ctx.query.gameId as string));
 
             const listingIp = isLoopbackAddress(ctx.socket.remoteAddress) ? "127.0.0.1" : this.server.config.socket.ip;
 
@@ -442,10 +546,21 @@ export class Matchmaker {
         });
 
         router.put("/api/games", ctx => {
-            if (!this.verifyRequest(ctx)) {
+            const session = this.getSessionFromRequest(ctx);
+
+            if (this.server.accountAuth.enabled) {
+                // 401 makes the client refresh its token and retry.
+                if (!session) {
+                    ctx.status = 401;
+                    return;
+                }
+            } else if (!this.verifyRequest(ctx)) {
                 ctx.status = 401;
                 return;
             }
+
+            if (session)
+                this.server.accountAuth.expectHost(session);
 
             const listingIp = isLoopbackAddress(ctx.socket.remoteAddress) ? "127.0.0.1" : this.server.config.socket.ip;
 
@@ -457,7 +572,15 @@ export class Matchmaker {
         });
 
         router.get("/api/games/filtered", ctx => {
-            if (!this.verifyRequest(ctx)) {
+            const session = this.getSessionFromRequest(ctx);
+
+            if (this.server.accountAuth.enabled) {
+                // 401 makes the client refresh its token and retry.
+                if (!session) {
+                    ctx.status = 401;
+                    return;
+                }
+            } else if (!this.verifyRequest(ctx)) {
                 ctx.status = 401;
                 return;
             }
@@ -596,7 +719,7 @@ export class Matchmaker {
                     continue;
 
                 if (typeof ignoreSearchTerms === "boolean" && ignoreSearchTerms) {
-                    const gameListing = this.getGameListing(ctx.socket.remoteAddress || "", room);
+                    const gameListing = this.getGameListing(ctx.socket.remoteAddress || "", room, session);
                     gamesAndRelevance.push([0, gameListing]);
                     continue;
                 }
@@ -607,7 +730,7 @@ export class Matchmaker {
                 var badMatchScore = 0;
 
                 if (filterSets.gameMap && !filterSets.gameMap.includes(room.settings.map)) badMatchScore++;
-                if (filterSets.chatMode !== undefined && filterSets.chatMode !== room.createdBy?.chatMode) badMatchScore++;
+                if (filterSets.chatMode !== undefined && filterSets.chatMode !== room.getHostConnection()?.chatMode) badMatchScore++;
                 if (filterSets.languages !== undefined && filterSets.languages !== room.settings.keywords) badMatchScore++;
 
                 switch (primaryFilterSet.GameMode) {
@@ -652,7 +775,7 @@ export class Matchmaker {
 
                 gamesAndRelevance.push([
                     badMatchScore,
-                    this.getGameListing(ctx.socket.remoteAddress || "", room),
+                    this.getGameListing(ctx.socket.remoteAddress || "", room, session),
                 ]);
             }
 
@@ -713,12 +836,23 @@ export class Matchmaker {
         });
 
         router.get("/api/filtertags", ctx => {
-            // TODO: when does this get called?
+            // The client unions these into its built-in default tags
+            // (FilterTagManager.HandleRefreshedTags -> ResetToDefaults + UnionWith),
+            // so an empty list means "no extra server-side tags" and keeps the
+            // client's own localized defaults.
             ctx.status = 200;
             ctx.body = [];
         });
 
         router.get("/api/games/:game_id", ctx => {
+            const session = this.getSessionFromRequest(ctx);
+
+            if (this.server.accountAuth.enabled && !session) {
+                // 401 makes the client refresh its token and retry.
+                ctx.status = 401;
+                return;
+            }
+
             const gameCode = parseInt(ctx.params.game_id);
             const foundRoom = this.server.rooms.get(gameCode);
             if (!foundRoom) {
@@ -738,7 +872,7 @@ export class Matchmaker {
             ctx.status = 200;
             ctx.body = {
                 Errors: null,
-                Game: this.getGameListing(ctx.socket.remoteAddress || "", foundRoom),
+                Game: this.getGameListing(ctx.socket.remoteAddress || "", foundRoom, session),
                 Region: StringName.NoTranslation,
                 UntranslatedRegion: this.server.config.clusterName,
             } as GameFoundByCodeJson;

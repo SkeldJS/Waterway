@@ -169,6 +169,9 @@ function makeHttpRequest(url: string) {
                 reject(e);
             });
         });
+        req.on("error", e => {
+            reject(e);
+        });
         req.end();
     });
 }
@@ -340,14 +343,19 @@ async function checkConfigDeprecations(config: WaterwayConfig, configFilename: s
 
 (async () => {
     const logger = new Logger(chalk.gray("Bootstrap"));
-    const internalIp = await getInternalIp();
+    let internalIp = "127.0.0.1";
+    try {
+        internalIp = await getInternalIp() as string;
+    } catch (e) {
+        logger.warn("Failed to get internal ip address, defaulting to 127.0.0.1");
+    }
 
     const workerConfig = createDefaultConfig();
     const resolvedConfig = await resolveConfig(logger, configFilename, true);
     recursiveAssign(workerConfig, resolvedConfig || {});
     applyCommandLineArgs(workerConfig);
     const externalIp = await fetchExternalIp(logger);
-    if (workerConfig.socket.ip === "auto") {
+    if (workerConfig.socket.ip === "auto" && externalIp) {
         workerConfig.socket.ip = externalIp;
     }
     checkConfigDeprecations(workerConfig, configFilename, logger);

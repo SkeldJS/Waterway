@@ -190,62 +190,47 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@skeldjs/au-client@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/au-client@npm:3.0.3"
-  checksum: 10/d83bcbf37568863ba874f19a631fd45db3737383689b33885f7a8261a83f486ee3f39bae7eee61d54f27da3c79037caa9aa5d9caf688f52150908f0ac2d4e110
+"@skeldjs/au-client@link:./skeldjs/packages/client::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/au-client@link:./skeldjs/packages/client::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/au-constants@npm:3.0.3, @skeldjs/au-constants@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/au-constants@npm:3.0.3"
-  checksum: 10/47f6738bbdcc8c752ebd6814a38c67b561b7021f54d31c6b0046c3abe9d05d89325d7a5217c3be19b91c0ad93faca29ef12a99e90a517d5a1904b8d0755b3d0e
+"@skeldjs/au-constants@link:./skeldjs/packages/constant::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/au-constants@link:./skeldjs/packages/constant::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/au-core@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/au-core@npm:3.0.3"
-  dependencies:
-    "@skeldjs/au-constants": "npm:3.0.3"
-    "@skeldjs/au-protocol": "npm:3.0.3"
-    "@skeldjs/events": "npm:3.0.3"
-    "@skeldjs/hazel": "npm:3.0.3"
-  checksum: 10/74a1b68a23a88137f155c8a3be154f1ef17f42d70f4cf4ddd908a4d878db8332efd5d6a9a8841e35995ea1a8f22e40893d5258e0e4e1a18bae0fdec71f08a58e
+"@skeldjs/au-core@link:./skeldjs/packages/core::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/au-core@link:./skeldjs/packages/core::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/au-protocol@npm:3.0.3, @skeldjs/au-protocol@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/au-protocol@npm:3.0.3"
-  dependencies:
-    "@skeldjs/au-constants": "npm:3.0.3"
-    "@skeldjs/hazel": "npm:3.0.3"
-  checksum: 10/4c937b8bd7567359e6cd170fc190b6cba5dff39112b245339fb9d7d28ab03625184d51b4c812474e6c58f2157621212011020766987fe8c7eff1c3e0e5ba7e5a
+"@skeldjs/au-protocol@link:./skeldjs/packages/protocol::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/au-protocol@link:./skeldjs/packages/protocol::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/au-text@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/au-text@npm:3.0.3"
-  checksum: 10/5f2a948d8b1ec0be3175f0837cb9995c9e8b23d8fd46968200f979c0191e74045d549cc993bdf5507abf121282955607a1067985e94f9863150809bae0b88103
+"@skeldjs/au-text@link:./skeldjs/packages/text::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/au-text@link:./skeldjs/packages/text::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/events@npm:3.0.3, @skeldjs/events@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/events@npm:3.0.3"
-  checksum: 10/9c6aa038e8ed7432906c3928dd5198f07eda63ace7668e093135c080c88a69280bdceda0c685ba4eaeff2f4cdac934e0e97dd45068ed93c2960087d669316293
+"@skeldjs/events@link:./skeldjs/packages/events::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/events@link:./skeldjs/packages/events::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
-"@skeldjs/hazel@npm:3.0.3, @skeldjs/hazel@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@skeldjs/hazel@npm:3.0.3"
-  checksum: 10/fe09f5b4649b82be2a41a8b45fa6d1325e8e1726999c6d0426f8853e8e7b2b79275484dd7fdc34afe4a0791c5d4b05b6c3b3ee5e8f913b865431c24215fcfc6b
+"@skeldjs/hazel@link:./skeldjs/packages/hazel::locator=%40skeldjs%2Fwaterway%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@skeldjs/hazel@link:./skeldjs/packages/hazel::locator=%40skeldjs%2Fwaterway%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@skeldjs/waterway@workspace:.":
   version: 0.0.0-use.local
@@ -253,13 +238,13 @@ __metadata:
   dependencies:
     "@koa/router": "npm:^14.0.0"
     "@schemastore/package": "npm:^0.0.6"
-    "@skeldjs/au-client": "npm:^3.0.3"
-    "@skeldjs/au-constants": "npm:^3.0.3"
-    "@skeldjs/au-core": "npm:^3.0.3"
-    "@skeldjs/au-protocol": "npm:^3.0.3"
-    "@skeldjs/au-text": "npm:^3.0.3"
-    "@skeldjs/events": "npm:^3.0.3"
-    "@skeldjs/hazel": "npm:^3.0.3"
+    "@skeldjs/au-client": "link:./skeldjs/packages/client"
+    "@skeldjs/au-constants": "link:./skeldjs/packages/constant"
+    "@skeldjs/au-core": "link:./skeldjs/packages/core"
+    "@skeldjs/au-protocol": "link:./skeldjs/packages/protocol"
+    "@skeldjs/au-text": "link:./skeldjs/packages/text"
+    "@skeldjs/events": "link:./skeldjs/packages/events"
+    "@skeldjs/hazel": "link:./skeldjs/packages/hazel"
     "@types/koa": "npm:^2"
     "@types/koa__router": "npm:^12"
     "@types/minimatch": "npm:^3.0.5"

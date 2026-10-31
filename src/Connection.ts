@@ -167,6 +167,22 @@ export class Connection {
      */
     room: Room|undefined;
 
+    /**
+     * The puid of the account this connection is bound to, if any.
+     */
+    puid: string|undefined;
+
+    /**
+     * The friend code of the bound account, if any.
+     */
+    friendCode: string|undefined;
+
+    /**
+     * A temporary game code to send instead of the real one when this client
+     * is told about the game it joined.
+     */
+    joinAlias: number;
+
     constructor(
         /**
          * The server that this client is connected to.
@@ -193,6 +209,9 @@ export class Connection {
         this.clientVersion = new Version(2021, 11, 9);
         this.platform = new PlatformSpecificData(Platform.Unknown, "Unknown");
         this.playerLevel = 0;
+        this.puid = undefined;
+        this.friendCode = undefined;
+        this.joinAlias = 0;
 
         this.nextExpectedNonce = 0;
         this._incrNonce = 0;
@@ -354,6 +373,9 @@ export class Connection {
         this.clientVersion = new Version(2021, 11, 9);
         this.platform = new PlatformSpecificData(Platform.Unknown, "Unknown");
         this.playerLevel = 0;
+        this.puid = undefined;
+        this.friendCode = undefined;
+        this.joinAlias = 0;
 
         this.server.removeConnection(this);
 
@@ -404,8 +426,8 @@ export class Connection {
             this.username,
             this.platform,
             this.playerLevel,
-            "",
-            ""
+            this.puid || "",
+            this.friendCode || ""
         )
     }
 }

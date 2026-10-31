@@ -9,9 +9,19 @@ export function createDefaultConfig(): WaterwayConfig {
         autoUpdate: false,
         exitConfirmation: true,
         defaultLanguage: "en",
-        acceptedVersions: ["2025.7.15"],
+        acceptedVersions: [],
         matchmaker: {
             port: 22023
+        },
+        account: {
+            enabled: true,
+            gameCodeLifetimeSeconds: 180,
+            sessionLifetimeMinutes: 30,
+            rejectUnmatched: false,
+            resolveFriendCode: true,
+            friendCodeEndpoint: "https://backend.innersloth.com/api/user/username",
+            friendCodeCacheMinutes: 30,
+            friendCodeTimeoutSeconds: 5
         },
         socket: {
             port: 22123,
@@ -53,6 +63,7 @@ export function createDefaultConfig(): WaterwayConfig {
             gameCodes: "v2",
             enforceSettings: {},
             authoritativeServer: false,
+            allowHostAuthority: false,
             advanced: {
                 unknownObjects: false
             },

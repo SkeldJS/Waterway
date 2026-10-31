@@ -22,5 +22,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - run: node ./scripts/fetchSkeldjs.js
+      env:
+        SKELDJS_REPO: ${{ vars.SKELDJS_REPO }}
+        SKELDJS_REF: ${{ vars.SKELDJS_REF }}
     - run: yarn
     - run: yarn build

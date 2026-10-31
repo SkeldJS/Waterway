@@ -63,6 +63,14 @@ import { HazelReader, HazelWriter } from "@skeldjs/hazel";
 import { EventEmitter, EventMapFromList } from "@skeldjs/events";
 import { RoomCode, RoomCodeVersion, Version } from "@skeldjs/au-client";
 
+import {
+    CompatibilityManager,
+    DisconnectMessages,
+    VersionCompareResult,
+    hasDisableServerAuthorityFlag,
+    normalizeVersion
+} from "./CompatibilityManager";
+
 import { recursiveAssign } from "./util/recursiveAssign";
 import { recursiveCompare } from "./util/recursiveCompare";
 import { recursiveClone } from "./util/recursiveClone";
@@ -86,6 +94,7 @@ import { LoadedPlugin, PluginLoader, WorkerPlugin } from "./handlers";
 
 import i18n from "./i18n";
 import { Matchmaker } from "./Matchmaker";
+import { AccountAuthManager, AccountConfig, AccountDisconnectMessages } from "./AccountAuth";
 import { Logger } from "./Logger";
 
 const byteSizes = ["bytes", "kb", "mb", "gb", "tb"];
@@ -385,6 +394,20 @@ export type RoomsConfig = StatefulRoomConfig & {
      */
     authoritativeServer: boolean;
     /**
+     * Whether to allow clients that request host authority (i.e. clients
+     * playing on a modded Among Us that disables server authority) to connect.
+     *
+     * When the server is authoritative ({@link RoomsConfig.authoritativeServer})
+     * and the client that creates a room has requested host authority, that
+     * room will automatically use host authority (the player who created it
+     * becomes the authority) instead of server authority.
+     *
+     * Note that these client code paths are less well tested and may contain
+     * bugs that can't be fixed server-side, use with caution.
+     * @default false
+     */
+    allowHostAuthority: boolean;
+    /**
      * Default appearance for a message sent by the server in game chat
      */
     serverPlayer: ServerPlayerOptions;
@@ -480,12 +503,24 @@ export type WaterwayConfig = {
     defaultLanguage: string;
     /**
      * Accepted game versions that clients can connect with.
+     *
+     * If this is left empty, Waterway will use its built-in list of supported
+     * versions (grouped by which versions are able to play together). Clients
+     * with unsupported versions will be sent a message telling them whether
+     * their game is too old or too new for this server.
+     *
+     * If this is not empty, only the exact versions listed here will be
+     * accepted.
      */
     acceptedVersions: string[];
     /**
      * Configuration for the included Waterway http matchmaker.
      */
     matchmaker: boolean | MatchmakerConfig;
+    /**
+     * Account binding through temporary game codes.
+     */
+    account: AccountConfig;
     /**
      * Options regarding the socket that the server listens on.
      */
@@ -557,6 +592,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     matchmaker: Matchmaker|undefined;
 
     /**
+     * Account binding for token sessions, see {@link WaterwayConfig.account}.
+     */
+    accountAuth: AccountAuthManager;
+
+    /**
      * All client connections connected to this server, mapped by their address:port,
      * see {@link Connection.address}.
      */
@@ -580,6 +620,18 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     pingInterval: NodeJS.Timeout;
 
     protected acceptedVersions: number[];
+
+    /**
+     * Used when {@link WaterwayConfig.acceptedVersions} is empty, to determine
+     * which versions can connect and which versions can play together.
+     */
+    protected compatibilityManager: CompatibilityManager;
+
+    /**
+     * Whether the server is using Waterway's built-in list of supported game
+     * versions, instead of the versions specified in the config.
+     */
+    protected isUsingDefaultVersions: boolean;
 
     constructor(
         /**
@@ -615,6 +667,8 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
 
         this.listenSockets = new Map;
 
+        this.accountAuth = new AccountAuthManager(this, this.config.account);
+
         if (this.config.matchmaker)
             this.matchmaker = new Matchmaker(this);
 
@@ -622,7 +676,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         this.connections = new Map;
         this.rooms = new Map;
 
-        this.acceptedVersions = config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
+        this.compatibilityManager = new CompatibilityManager();
+        this.isUsingDefaultVersions = !config.acceptedVersions || config.acceptedVersions.length === 0;
+        this.acceptedVersions = this.isUsingDefaultVersions
+            ? []
+            : config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
 
         this.vorpal.delimiter(chalk.greenBright("waterway~$")).show();
         this.vorpal
@@ -1228,7 +1286,31 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     }
 
     isVersionAccepted(version: Version): boolean {
-        return this.acceptedVersions.indexOf(version.toEncoded()) !== -1;
+        if (this.isUsingDefaultVersions) {
+            return this.compatibilityManager.canConnectToServer(version) === VersionCompareResult.Compatible;
+        }
+
+        return this.acceptedVersions.indexOf(normalizeVersion(version).toEncoded()) !== -1;
+    }
+
+    /**
+     * Compare a client's game version against the versions that this server
+     * accepts.
+     *
+     * When {@link WaterwayConfig.acceptedVersions} is empty, this uses the
+     * built-in version list and will tell you whether the client's game is too
+     * old or too new for this server. Otherwise, it only tells you whether the
+     * exact version is accepted or not.
+     * @param version The client's game version.
+     */
+    canConnectToServer(version: Version): VersionCompareResult {
+        if (this.isUsingDefaultVersions) {
+            return this.compatibilityManager.canConnectToServer(version);
+        }
+
+        return this.isVersionAccepted(version)
+            ? VersionCompareResult.Compatible
+            : VersionCompareResult.Unknown;
     }
 
     async pollClientReliability() {
@@ -1374,6 +1456,11 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
 
         recursiveAssign(this.config, newConfig);
+
+        this.isUsingDefaultVersions = !this.config.acceptedVersions || this.config.acceptedVersions.length === 0;
+        this.acceptedVersions = this.isUsingDefaultVersions
+            ? []
+            : this.config.acceptedVersions.map(x => Version.fromString(x).toEncoded());
     }
 
     sendRawPacket(listenSocket: dgram.Socket, remote: dgram.RemoteInfo, buffer: Buffer) {
@@ -1458,11 +1545,39 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         sender.platform = helloPacket.platform;
         sender.playerLevel = 0;
 
-        if (!this.isVersionAccepted(sender.clientVersion)) {
+        const versionCompareResult = this.canConnectToServer(sender.clientVersion);
+        if (versionCompareResult !== VersionCompareResult.Compatible) {
+            if (this.isUsingDefaultVersions) {
+                this.logger.warn("%s connected with unsupported client version: %s",
+                    sender, sender.clientVersion.toString());
+
+                const message = versionCompareResult === VersionCompareResult.ClientTooOld
+                    ? DisconnectMessages.VersionClientTooOld
+                    : versionCompareResult === VersionCompareResult.ServerTooOld
+                        ? DisconnectMessages.VersionServerTooOld
+                        : DisconnectMessages.VersionUnsupported;
+
+                await sender.disconnect(message);
+                return;
+            }
+
             this.logger.warn("%s connected with invalid client version: %s",
                 sender, sender.clientVersion.toString());
             sender.disconnect(DisconnectReason.IncorrectVersion);
             return;
+        }
+
+        // Warn when players connect using the +25 flag that disables server
+        // authority. This changes game behaviour, so we'd like to know if it's
+        // in use.
+        if (hasDisableServerAuthorityFlag(sender.clientVersion)) {
+            if (!this.config.rooms.allowHostAuthority) {
+                this.logger.info("%s kicked because they requested host authority.", sender);
+                await sender.disconnect(DisconnectMessages.HostAuthorityUnsupported);
+                return;
+            }
+
+            this.logger.info("%s connected with server authority disabled, please mention that this mode is in use when asking for support.", sender);
         }
 
         this.logger.info("%s connected, language: %s",
@@ -1490,8 +1605,65 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
     }
 
+    // Binds the http token session to this connection. Code 0 means hosting.
+    // Returns the real game code to join, or not ok when the client was disconnected.
+    async bindAccount(connection: Connection, code: number): Promise<{ ok: boolean; target: number }> {
+        const accounts = this.accountAuth;
+        if (!accounts.enabled)
+            return { ok: true, target: code };
+
+        if (connection.puid !== undefined) {
+            // Already bound, only a temporary code needs swapping.
+            if (code !== 0) {
+                const target = accounts.tryResolveAlias(code, connection.puid);
+                if (target !== null)
+                    return { ok: true, target };
+            }
+
+            return { ok: true, target: code };
+        }
+
+        const result = code === 0
+            ? accounts.claimHost(connection.username, connection.language, connection.clientVersion.toEncoded())
+            : accounts.claimJoin(code, connection.username, connection.language, connection.clientVersion.toEncoded());
+
+        if (result.conflict) {
+            this.logger.warn("%s could not be bound, another player with the same name is claiming a game, disconnecting",
+                connection);
+            await connection.disconnect(AccountDisconnectMessages.AuthenticationFailedRetry);
+            return { ok: false, target: code };
+        }
+
+        if (!result.claim) {
+            this.logger.warn("%s could not be bound to an account (game code %s), %s",
+                connection, new RoomCode(code), accounts.rejectUnmatched
+                    ? "disconnecting because account.rejectUnmatched is enabled"
+                    : "allowed in anonymously");
+
+            if (accounts.rejectUnmatched) {
+                await connection.disconnect(AccountDisconnectMessages.AccountUnmatched);
+                return { ok: false, target: code };
+            }
+
+            return { ok: true, target: code };
+        }
+
+        connection.puid = result.claim.puid;
+        connection.friendCode = result.claim.friendCode;
+        connection.joinAlias = result.claim.alias;
+
+        this.logger.info("%s bound to %s (%s)",
+            connection, result.claim.puid, result.claim.friendCode || "no friend code");
+
+        return { ok: true, target: code === 0 ? 0 : result.claim.target };
+    }
+
     async handleHostGameMessage(message: C2SHostGameMessage, sender: Connection) {
         if (sender.room)
+            return;
+
+        const bindResult = await this.bindAccount(sender, 0);
+        if (!bindResult.ok)
             return;
 
         const roomCode = this.generateRoomCode(this.config.rooms.gameCodes === "v1" ? 4 : 6);
@@ -1523,14 +1695,20 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
     }
 
     async handleJoinGameMessage(message: C2SJoinGameMessage, sender: Connection) {
+        const bindResult = await this.bindAccount(sender, message.gameId);
+        if (!bindResult.ok)
+            return;
+
+        const gameId = bindResult.target;
+
         if (
             sender.room &&
             sender.room.gameState !== GameState.Ended && // extra checks so you can join back the same game after it has ended
-            sender.room.code.id !== message.gameId
+            sender.room.code.id !== gameId
         )
             return;
 
-        await this.attemptJoin(sender, new RoomCode(message.gameId));
+        await this.attemptJoin(sender, new RoomCode(gameId));
     }
 
     async handleQueryPlatformIdsMessage(message: QueryPlatformIdsMessage, sender: Connection) {
@@ -1672,7 +1850,7 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
                 room.settings.map,
                 room.settings.numImpostors,
                 room.settings.maxPlayers,
-                room.playerAuthority?.platform || new PlatformSpecificData(
+                room.getHostConnection()?.platform || new PlatformSpecificData(
                     Platform.Unknown,
                     "UNKNOWN"
                 )
@@ -1971,7 +2149,7 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
         }
 
         let roomCode = len === 4 ? RoomCode.generateRandom(RoomCodeVersion.V1) : RoomCode.generateRandom(RoomCodeVersion.V2);
-        while (this.rooms.get(roomCode.id))
+        while (this.rooms.get(roomCode.id) || this.accountAuth.isAlias(roomCode.id))
             roomCode = len === 4 ? RoomCode.generateRandom(RoomCodeVersion.V1) : RoomCode.generateRandom(RoomCodeVersion.V2);
 
         return roomCode;
@@ -2059,9 +2237,6 @@ export class WaterwayServer extends EventEmitter<WaterwayServerEvents> {
                 }
             }
         }
-
-        this.logger.info("%s joining room %s",
-            connection, ev.alteredRoom);
 
         await ev.alteredRoom.handleRemoteJoin(connection);
     }
